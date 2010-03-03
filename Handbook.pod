@@ -1,0 +1,2070 @@
+# author: kvorg / Jan Jona Javoršek
+# title: Mojolicios Handbook
+# comments, bugs and fixes to: jan.javorsek@guest.arnes.si
+#
+# (C) 2010 Jan Jona Javoršek, all rights reserved with the following exception:
+#
+# All material in this document can be reused in the scope of Mojo/Mojolicious
+# documentation under the same conditions that apply to that package.
+#
+# DOC TODO:
+# * CA parts of URL for docs
+# * lib/Mojo/Message.pm: $message    = $message->default_charset('UTF-8');
+#   Default charset used for form data parsing.
+#  How do we use this?
+
+=head1 NAME
+
+Mojo and Mojolicious Handbook
+
+=head1 ABOUT HANDBOOK
+
+This is an alternative, temporary documentation resource for
+L<Mojolicious>, a fast and light stand-alone perl
+Model-View-Controller framework. It is meant as a temporary stand-in
+and resource for L<Mojolicious::Guides> - Mojolicious Guide To The Galaxy.
+
+A MVC web framework provides application interfaces for web server and
+client interaction, content generation services and data models. Its
+design is centered on the concept of B<separation of concern>, making
+it easy to deal with the data, the logic and the presentation
+separately instead of mixing data, code and web page bits into an
+indigestible soup.
+
+To summarize the mission of L<Mojolicious> a as modern perl MVC web
+framework, it is best to start with a quote from Sebastiean Riedel,
+the author of Mojo and Mojolicious:
+
+=over
+
+Back in the early days of the web there was this wonderful Perl library
+called L<CGI>, many people only learned Perl because of it. [...]
+L<Mojolicious> is a new attempt at implementing this idea using state of the
+art technology.
+
+=back
+
+L<Mojolicious> is not only a fast and light alternative but
+full-featured web MVC frameworks, it offers a "lite" mode that makes
+developing web tools and replacing existing CGI scripts a breeze.
+
+Its is as simple (or simpler) to deploy as C<CGI.pm> and has no
+out-of-perl-core dependencies but can use certain features provided by
+add-on modules from CPAN if they are install. It also offers
+B<scaffolding> (generation of application files from templates) to
+make starting a new project even easier.
+
+L<Mojolicious> can be deployed as a stand-alone server, C<CGI> or
+C<FCGI> application, Apache C<mod_perl> handler, a L<PSGI> application
+etc., and it offers support for all the basic elements of modern
+dynamic web programming: serving of B<static files>, dispatching
+requests from an URL to a B<controller> (application class) and
+B<action> (application method) using B<routes> and building responses
+with an advanced built-in B<templating system> (or any other
+templating system of your choice).
+
+=head1 INSTALLATION
+
+You should install the Mojolicious framework and use the supplied
+documentation and commands to learn and experiment while reading this
+handbook. You can use the last release on CPAN:
+
+ sudo cpanp install Mojolicious
+
+If you want to use the latest version, however, installing from the
+source repository is better:
+
+ git clone git://github.com/kraih/mojo.git
+ cd mojo
+ perl Makefile.PL
+ make && make test && sudo make install
+
+=head1 FIRST RUN
+
+You can try out the framework by modifying the example application
+provided by the C<generate> command. Simply type this on the command line:
+
+  $ mojolicious generate lite_app ml_test
+  $ ./mltest daemon --reload
+  $ <web-broser-of-choce> http://localhost:3000/
+  $ <edit code and reload page, server auto-reloads when you save chages>
+
+When you are ready to look at a full application, you can extract the
+components of the script with the C<inflate> command or start a new
+project with full-blown scaffolding and interace:
+
+ $ ./mltest inflate
+
+or
+
+   $ mojolicious generate app MyTest
+   $ cd MyTest
+   $ ./script/mytest daemon --reload
+
+Read ahead for more ...
+
+=head1 A NOTE ON DOCUMENTATION
+
+While using the Mojolicious documentation, it is worth keeping in mind
+the following facts:
+
+=over 4
+
+=item *
+
+Most of the manual pages in the distribution are reference-only: they
+do not describe the framework and how to use it, but the interfaces
+(APIs) and implementation details for developers. They are for people
+who can follow the code.
+
+=item *
+
+Using concise style, arguments and return values are implied
+in the example provided:
+
+    my $encoding = $renderer->encoding;
+    $renderer    = $renderer->encoding('koi8-r');
+
+This example means that calling the C<encoding> method on a renderer
+object with no arguments will return the current encoding, but with an
+argument will set the value and return the renderer again.
+
+In fact, this is the usual method interface in Mojolicious since it
+allows chaining method calls on the object and avoids returning a
+value you should probably already have. If you want the traditional
+approach where a set method returns the value set, you can always do:
+
+    my $encoding = $renderer->encoding('koi8-r')->encoding;
+
+=item *
+
+See also Mojolicious on CPAN
+(L<http://search.cpan.org/~kraih/Mojolicious/>), Mojolicious home at
+L<http://www.mojolicious.org/> and Sebastian Riedel's site at
+L<http://labs.kraih.com/>.
+
+There are also presentation slides in English by Anatoly Sharifulin
+L<http://www.slideshare.net/sharifulin/mojo-en>.
+
+
+=item *
+
+You should look at some end user documentation and essential reference
+in C<Mojolicious> distribution:
+
+=over 8
+
+=item L<Mojolicious::Lite>
+
+Introduction to the simplified application interfaces with full examples.
+
+=item L<Mojolicious::Commands>
+
+Command-line interface
+
+=item L<Mojo::Template>, L<Mojolicious::Plugin::EpRenderer>
+
+Templating subsystem
+
+=item L<MojoX::Routes>
+
+See SYNOPSIS for examples and syntax.
+
+=item L<Mojolicious::Guides>
+
+=item L<Mojolicious::Guides::Cheatsheet>
+
+=back
+
+=item *
+
+It is well worth to read and understand the reference manual page of
+L<Mojo::Base>, the base class for Mojo/Mojolicious projects that
+provides the general C<new> method and highly optimized attributes for
+Mojo objects, and L<Mojo::Bytestream> with its versatile portable text
+and bytestream manipulation functions and the simplified C<b()> syntax.
+
+=item *
+
+Full examples, blogs and other resources:
+
+XXX needs non-vti examples ;-)
+
+=over 8
+
+=item Bootylicious
+
+A one-file blog engine on L<Mojolicious>: L<http://getbootylicious.org/>
+
+=item Showmetheco.de blog
+
+C<vti>'s blog: L<http://vti.showmetheco.de/>
+
+=item Pastelicious
+
+A simple nopaste service build as a C<Mojolicious::Lite> application:
+L<http://showmetheco.de/>
+
+=back
+
+=back
+
+=head1 OVERVIEW OF MOJOLICIOUS AND ITS ARCHITECTURE
+
+L<Mojolicious> is composed of a full HTTP 1.1 Client/Server framework
+and basic application framework building functionality in the C<Mojo>
+namespace, a number of advanced services that compose the core of
+C<Mojolicious> framework in C<MojoX> namespace and the framework
+itself with its default and "lite" bindings in C<Mojolicious> namespace.
+
+The presentation here is very simplified and presented from the point
+of view of the application programmer, with as little detail on the
+server/implementation side as possible. See L<COMPONENTS OF Mojolicious> for a more detailed description.
+
+The HTTP Server is the starting point of the application. For each
+HTTP request, it creates a L<Mojo::Transaction> object, usually
+referred to as C<tx>, with two L<Mojo::Message> objects as attributes
+C<req> and C<res>, for request and response. The two objects
+encapsulate the whole complexity of HTTP requests, including headers,
+contents with their MIME types and encodings, upload files, body
+(POST) and path (REST) parameters, cookies etc.
+
+When the request part of the transaction is processed sufficiently,
+the server calls the transaction handler method of the application
+(called simply C<handler>). The application is now free to process the
+request and build a suitable response, for example a web page, an
+error code or a redirect. This is a flexible base on top of which any
+web framework can be built, and L<Mojolicious> is one such framework
+built on top of L<Mojo> HTTP 1.1 stack and a number of L<MojoX> extensions.
+
+A L<Mojolicious> application essentially subclasses L<Mojolicoius>,
+providing setup code in the method C<startup> to be called once at
+startup of every application instance, while most of the L<Mojolicous>
+functionality and defaults (default controllers, MIME type database)
+is set up in the object creation method C<new> and can be accessed via
+the application object.
+
+The start script sets the application namespace (in C<$ENV{MOJO_APP}>)
+and passes control to the server, which in turn calls the C<handle>
+method for every successfully constructed transaction request and
+processes the transaction in the following steps:
+
+=over 4
+
+=item *
+
+load session, if there is one
+
+=item *
+
+run the application's static dispatcher, by default for C<public/>
+
+=item *
+
+run the application's routes dispatcher, using routes set up in C<setup()>
+
+=over 8
+
+=item *
+
+[by dispatcher] run the application's controller::action, if found by routes dispatcher
+
+=item *
+
+[by controller] perform application logic, setting values in C<$stash>
+
+=item *
+
+[by controller] call render(), using renderer, stash and templates to
+construct the response
+
+=back
+
+=item *
+
+process errors and not-found states
+
+=item *
+
+store session state
+
+=back
+
+The routes dispatcher is where most of the application is connected:
+the dispatcher will find the best match for request URI and select a
+controller and an action (a class and a method in your application.
+
+In the case of example application as produced by C<generate app>
+
+ $r->route('/:controller/:action/:id')->to('example#welcome', id => 1)
+
+calls
+
+ app_name>::Example->welcome()
+
+The path data and additional context are all stored in C<$stash>, a
+hash used for transaction-specific non persistent data storage and
+exchange, and made accessible to your application controller to
+performs whatever functions needed and store more data on the stash.
+
+It is your controller's job to implement and connections with external
+data sources (the "model" from MVC paradigm). If you need any start-up
+initialization, you can perform it in the application's C<startup()>
+method.
+
+The last stage in the pipeline is to convey the results back to the
+HTTP stash: the process is called rendering. Your controller can
+render directly, using either C<render_text()> or C<render_data>
+(where the MIME type has to be set XXX), but most often the built-in
+renderer L<MojoX::Renderer> will be used and data will be passed to it
+using the stash.
+
+The renderer by default tries to use a template called C<<
+<controller>/<action> >>, so <<example/welcome> in this case. The file
+has two extensions: the first is the format of the result
+(ie. C<html>), and will be used to select the correct MIME-type, while
+the second is the format of the template (by default C<.ep>). The
+format extensions is processed by looking up a list of "handlers",
+usually provided by plugins, and by default including C<.txt>, C<.ep>,
+C<.epl>, C<.json> and C<.pod>.
+
+Most of the time, the layout is in the Mojoliciuos built-in C<.ep>
+format, which is small, fast and versatile, but fully described
+L<RENDERERS AND TEMPLATES>. It has many features, including helpers
+that can provide additional services, such as translation.
+
+After the renderer is finished, the control is passed back to the HTTP
+stack and it serves the response to the client.
+
+XXXX mostly not done from here on, but there are some fuller sections
+to be found.
+
+
+=head1 DISPATCHING
+
+XXX This should contain user documentation on static and routes dispatching
+
+Intro here...
+
+=head2 Dispatching Static Files
+
+C<MojoX::Dispatcher::Static>
+
+(03:38:40 PM) doubi: I have my mojolicious app in a subdirectory, but it keeps looking for static things like css and js under the top level site folder. How can I make it look in the subdir, where app is?
+(03:50:24 PM) sri: doubi: you can set $app->static->prefix
+(04:15:06 PM) doubi: sri: Where should $app->static->prefix be set? In individual controllers?
+(04:16:16 PM) sri: doubi: startup
+(04:39:22 PM) sri: umm...prefix is the prefix used for request paths not a file system path
+(04:40:02 PM) sri: app->static->root is the filesystem path
+
+on multiple static roots:
+(11:51:47 PM) vti: but you can always add you own dispatcher
+(11:51:59 PM) vti: and even rewrite dispatch process
+
+<stephen> Basically, I'd like to stream a file to output, rather than having to pull it into memory and use $self->render_text().
+<sri> trivial with Mojo::Asset::File
+<stephen> How do I use that with a controller? Right now I'm using File::Slurp and $self->render_text() on the results.
+<sri> or actually just ->render_static('/foo.txt');
+<sri> we already have a sugar layer for it
+
+<jeff> is there a way to set where to look for "public" in a mojo app?  I've basically got the app running on a subdomain, but it's not finding stylesheets, javascript, etc.
+<jeff> either in the app itself... or ideally as an Apache directive/environment variable
+<sri> jeff: public should just work
+<sri> of course under the same base path
+<sri> $app->static->root is the file system path
+<jeff> may I post 10 lines of apache config here
+<vti> jeff: http://showmetheco.de/ :)
+<garfield> [ Paste ]
+<jeff> http://showmetheco.de/ca9032597d93bad7efcf5fe00e423ed15d5ecd47
+>>
+    <Perl>
+      use lib '/home/jhorn/mojo/elite_signup/lib';
+      use Apache2::Mojo;
+      use EliteSignup;
+    </Perl>
+
+  <Location /signup/>
+    SetHandler perl-script
+    PerlHandler Apache2::Mojo
+    PerlSetEnv MOJO_APP EliteSignup
+    PerlSetEnv MOJO_RELOAD 1
+  </Location>
+<<
+<jeff> now... will this app just know where to look for public
+<jeff> or do I need to set something
+<jeff> public is currently in /home/jhorn/mojo/elite_signup/public
+<sri> oh mod_perl, i have no clue about that
+<sri> jeff: my guess is that it would detect it
+<sri> all static files should be available under /signup/*
+
+=head2 Dispatching with Routes
+
+=head2 Basic Routes
+
+When using redirect_to with named routes... is there a way to set values for the placeholders in that route?
+(03:07:35 PM) sri: memowe: redirect_to('name', foo => 'bar');
+
+<jeff> I need to run a Mojo application in a subdomain... i.e. http://www.foo.com/xyz/ should be running the mojo app, but http://www.foo.com/anythingelse shoud not ... does anyone have an example Apache config and necessary changes to the app to make this work
+<sri> why would you have to change your spp?
+<jeff> not sure if the pattern for /:controller/:action/:id would change because the app is relocated
+<sri> it should be able to detect the base part of the path
+<sri> and then only use the dynamic part for routes
+<jeff> ok cool
+
+ xantus: I never use trailing slashes in my routes (not sure if that matters, but I'd check that)
+
+=head2 Advanced Capturing
+
+=head2 Bridges
+
+=head2 Routes and ladders in L<Mojolicious::Lite>
+
+Automation, controller/methods
+
+Ladders
+
+=head2 Dispatching Without Routes
+
+Existing dispatchers, writing your own dispatcher
+
+
+=head1 CONTROLLERS AND ACTIONS
+
+XXX This should contain user documentation on controller and action
+writing, and simple rendering (C<render_text()>, C<render_data()>),
+except more complicated things, such as models.
+
+Forget-me-not: stash, parameters
+
+C<< ->url_for() >> and C<< ->redirect_to() >>
+
+Details, gotchas
+
+Implementing stuff on that
+
+
+=head1 RENDERERS AND TEMPLATES
+
+XXX This should contain user documentation on rendering with .ep and .epl, statsh interaction, mime types for layouts and results, helpers and handlers, additional renderes etc.
+
+=head2 Rendering in Mojolicious
+
+(02:09:16 AM) ask: what's the proper way to render a bit of data with Mojo::Template but not return the results to the browser?
+(02:10:00 AM) ask: (I want to render a template snippet and then return it as part of a JSON data structure)
+(02:10:11 AM) sri: ask: ->render_partial('some_template')
+(02:11:00 AM) sri: or ->render_*(..., partial => 1);
+(02:11:19 AM) sri: it will just return the result
+(02:12:03 AM) ask: sri: ah, of course - thanks.
+
+render_text() for binary data
+
+=head2 Rendering Plugins
+
+=head2 Handlers
+
+=head2 Templates in Mojolicious
+
+=head2 Extending templates: Helpers
+
+=head2 Using other templating engines
+
+
+=head1 SESSIONS, COOKIES, AUTHENTICATION, AUTHORIZATION
+
+<vti> sri: how to disable cookie savings in mojo::client?
+<sri> vti: set cookie_jar to undef
+
+sessions and performance: avoiding model access (DB or file) on every
+page read by using memcache ... http://www.youtube.com/watch?v=i6Fr65PFqfk - signed
+cookies and crucial data in the cookie and you are done
+
+=head1 WORKING WITH FILES
+
+XXX using files from controllers or renderers, not static dispatching
+
+uploads
+
+as data, dispatching is covered in a previous section!
+
+mime types
+
+encodings
+
+issues with locking and updating
+
+
+=head1 USING MODELS
+
+Mojolicious is not designed with any particular data model in
+mind. Perl currently has a number of ORM (object-relational-mapping)
+implementations, ie. L<DBIx::Class>, L<Class::DBI>,
+L<Rose::DB::Object>, L<ObjectDB>, and you can use other kinds of
+models, such as L<DB::CouchDB>, tied variables, flat file
+storage/retrieval etc.
+
+Without setting any preference or precedence, we will use
+L<DBIx::Class> with a C<SQLite> for backend to present working
+examples.
+
+In a MVC implementation, the usual structure of the application
+isolates the three components as much as possible to ensure separation
+of concerns (ie. clean interfaces) and to make it easier to change one
+component of the application. In addition, most models based on
+existing ORM layers make changing the backend implementation (the
+database used) very simple, providing even more flexibility to your
+application.
+
+The B<controller> is what the majority of the L<Mojolicious> framework
+is all about - routing the data from the model (any data source you
+need) to the view (usually using a templating system). The cleanest
+way to achieve this is to use the model in the controller and export
+the data to the templating system via the stash.
+
+If you find yourself accessing the model directly from the
+templating system, you will end up with ugly templates and complicated
+accident-prone application. The stash is your friend, use the stash!
+
+=head2 Example: The Records Database
+
+=head2 Authentication/Authorization, Session and Model
+
+=head2 Adding CRUD (Create, Update, Delete)
+
+=head2 Models and files
+
+
+=head1 DEBUGGING MOJOLICIOUS APPLICATIONS
+
+basics: warnings, strict, perltidy, note on L<Mojolicious::Lite>
+defaults
+
+writing tests
+
+controlling verbosity
+
+log levels
+
+
+=head1 MOJOLICOIUS PLUGINS
+
+Explanation of plugin architecture and interception points.
+
+=head2 Standard Default Plugins
+
+=head2 Optional Default Plugins
+
+=head2 Finding Additional Plugins
+
+=head2 Writing Your Own
+
+Extending Mojolicious for your application is often best achieved by
+writing a plugin and loading it in your application. See L</Extending
+Mojolicious with Plugins> for more information.
+
+=head1 USING MOJO HTTP CLIENT
+
+=head1 MOJOLICIOUS IN PRODUCTION
+
+B<XXX Kind souls will supplement this with advice on running
+effectively under different environments.>
+
+=head2 Running a stand-alone server
+
+getting set-up with an asynchronous C<poll()>
+
+Issues with blocking database connections: XXX discussion on IRC, no
+definitive argument and explanation receive.
+
+prefork
+
+=head2 Pre-forking behind a proxy
+
+=head2 Running with C<CGI>
+
+=head2 Running with C<FastCGI>
+
+=head2 Running under C<mod_perl>
+
+=head2 Running with C<PSGI>
+
+
+Deploying bootylicious under Apache with Fast CGI:
+http://getbootylicious.org/articles/2009/09/apache-fastcgi.html
+
+<sri> i'm just guessing though, Apache2::Mojo has historically never been that great
+<jeff> how do people typically run Mojo in production?
+<sri> mostly fastcgi
+<sri> like catalyst
+<sri> i think nginx with Mojo::Server::FCGI is the most popular setup atm
+<sri> (for performance)
+<sri> if you want easy setup Apache + Mojo::Server::FastCGI should be the best choice
+
+
+<jeff> ok... thanks
+<jeff> how can I get what is being matched against the routes... my forms are posting to relative urls (e.g. action="foo") and the "foo" action is not being called
+<jeff> I have routes that look like $r->route('/:action/')->to(controller => 'signup')
+<jeff> but Signup::foo isn't being called for the /signup/foo action
+<jeff> I cannot seem to use routes that look like /:controller/:action/ because then it thinks what is the action is the controller
+<jeff> since I'm just running the app in /signup via the apache config... I don't think route is matching the /signup part at all
+<jeff> I think it's thinging /signup is /
+<jeff> and /signup/foo is /foo
+<jeff> but I'm not sure
+<sri> thats correct, /signup is the base
+<sri> and not matched at all
+<sri> thats what keeps the application portable
+<jeff> so $r->route('/:action/')->to( controller => 'signup') should work in this case?
+<sri> yes
+<sri> you can dump $self->req->url
+<sri> base should be /signup and real path /foo
+* stephan48 has quit (Ping timeout: 360 seconds)
+<sri> if thats not the case it might be a Apache2::Mojo bug
+<jeff> do you have any pointers to doing an Apache + fastCGI setup besides the CPAN page
+<jeff> I've run into a number of problems with this module so far
+<jeff> yep... when I print $self->req->url, I get "/" even though I'm doing /signup/foo
+<jeff> actually... using Dumper... I see base pointing to /signup, but path has 'parts' => []
+<jeff> yikes... I just updated Mojo and Apache2::Mojo from CPAN... now I'm getting "Can't locate object method "load build" via package "Mojo::Loader" at ..../Apache2/Mojo.pm line 36"
+<sri> your version of Apache2::Mojo is ancient
+<jeff> latest from CPAN
+<jeff> shall I get it elsewhere
+<sri> that sucks, the bugfix has been around for like a year
+<sri> prolly some github repo then
+<sri> Mojo::Server::FCGI should have example configs in the examples directory
+<sri> those work with fcgi and fastcgi
+<jeff> so if I set that up... I really only need to:
+<jeff> Alias /signup /path/to/my/signup and I'm good
+* sri nods
+<jeff> ok... that sounds much better
+<jeff> Uwe's source on github is version 0.004 which is the one I have btw
+<jeff> if anyone knows a newer one that'd be great as well... but I'm going to crank on using fcgi instead since that seems more stable
+<jeff> there's no $VERSION defined in the file (of Apache2::Mojo)
+<jeff> I had it sent to me in January
+<jeff> file name is tewk-apache2-mojo-2ad4431
+<jeff> the dist.ini says it's 0.004 as well
+<jeff> but I don't think it was packaged up for CPAN yet
+<jeff> anyhow... after upgrading Mojolicious from CPAN, I actually get a different error (above) even with this newer Apache2::Mojo
+
+03:25:37 AM) doubi: Evening all. I'm playing with bootylicious to try to understand mojolicious better. I first set up fine following http://getbootylicious.org/articles/2009/08/ideal-for-shared-hosting.html .
+(03:25:39 AM) garfield: [ Ideal for shared hosting / Bootylicious ]
+(03:25:40 AM) garfield: http://xrl.us/bgwwt4
+(03:26:14 AM) doubi: Now I'm trying to see if I can move it to a subfolder of my site, so that everything will be served from mysite.com/booty/ or somesuch. How do I get the menu items to point to pages under /booty/ and not under mysite.com/ ? I tried changing "base" in bootylicious.conf but it made no difference
+(03:26:43 AM) sri: stop right there
+(03:26:58 AM) sri: you should not have to change anything in the app
+(03:27:10 AM) sri: you just change the apache config
+(03:27:33 AM) doubi: ... ok... brb...
+(03:27:48 AM) sri: different scriptalias might be enough
+(03:28:30 AM) sri: thats why we have helpers like url_for, they generate all our urls dynamically based on the incoming request data
+(03:29:30 AM) sri: doubi: vti also demonstartes how to use mod_rewrite for that
+(03:30:11 AM) sri: you should be able to rewrite to /booty/ instead of just /
+(03:30:47 AM) sri: but this all has nothing to do with mojolicious, stay away from the app :)
+(03:34:12 AM) sri: vti++ # that article is really good
+(03:34:39 AM) sri: vti should repost them on his blog imo
+(03:41:08 AM) doubi: *sigh* I think this might all be a lot more complex than it should because I'm on only on virtual private hosting and can't examine / change my httpd.conf
+(03:43:23 AM) doubi: I think the clincher is my inability to set DocumentRoot
+(03:45:42 AM) doubi: In the example it's set to site.com/htdocs, which I can't copy. I'd have though that means I have to work round it with static->prefix or static->root like you said before sri?
+(03:48:00 AM) sri: that of course changes everything
+(03:48:12 AM) sri: you can use prefix
+(03:48:30 AM) sri: prefix('/booty')
+(03:49:54 AM) sri: you might want to prefix all your routes with a bridge for less typing too
+(03:50:23 AM) sri: my $b = $r->bridge('/booty'); $b->route(...)->to(...); and so on
+(03:58:56 AM) sri: that you are allowed to use mod_perl but not to configure apache properly seems weird though
+(04:02:38 AM) doubi: There's no mod_perl actually, but both mod_fastcgi and mod_fcgid
+=head2 Mojo[licious?] Modes
+
+(12:11:45 AM) sri: each mode can have a method in the app class
+(12:11:52 AM) sri: like production_mode
+(12:11:58 AM) sri: development_mode
+(12:12:05 AM) sri: that gets called on startup
+(12:12:20 AM) sri: and they can configure the app for that specific environment
+(12:12:39 AM) sri: like different databases for development and production ;)
+(12:13:23 AM) sri: it's like a environment specific startup method
+(12:14:17 AM) sri: thats it basically
+(12:14:52 AM) sri: each mode also gets it's own log file and the like but thats not so important
+
+
+=head1 COMPONENTS OF MOJOLICIOUS
+
+This section is an overview of the implementation, with more detail
+than needed for just simple application development. It is intended as
+a supplement to reading the code and the reference documentation. It
+might be outdated or simply wrong.
+
+XXX Long, but unfinished ...
+
+
+=head2 C<Mojo>, C<MojoX> and C<Mojolicious> namespaces
+
+L<Mojolicious> is logically divided into three namespaces:
+
+=over 4
+
+=item C<Mojo>
+
+C<Mojo> contains a web development framework, a framework for building
+simple web applications and web application frameworks.
+
+C<Mojo> implements a full web server and client stack with all the
+necessary supporting infrastructure, including templates, but does not define any
+dispatchers and application logic (controllers).
+
+It is meant to serve as base to be extended by users, used for minimal
+applications and use as framework for more full-blown web frameworks,
+such as L<Mojolicious> itself.
+
+=item C<MojoX>
+
+C<MojoX> is the namespace for extensions to C<Mojo>. This is the
+namespace used by user-developed extensions found on CPAN and
+GitHub.
+
+Inside the C<Mojolicious> distribution, this namespace is populated
+with classes that extend C<Mojo> with sessions, dispatchers and
+controllers and an implementation of the routes dispatching system.
+
+=item C<Mojolicious>
+
+C<Mojolicious> is the namespace of the Mojolicious web application
+framework itself. It is based on C<Mojo> and sessions, dispatchers,
+controllers and routes dispatching from C<MojoX>. It presents two
+application interfaces, L<Mojolicious> for full blown applications
+with multiple files and controller classes, using template directory
+structures, and L<Mojolicious::Lite>, a simplified interface with a
+single controller class where the whole application is expressed
+in a single file.
+
+=back
+
+=head2 L<Mojo::Base>: a base class with attributes
+
+L<Mojo::Base> is a simple base class for Mojo projects. It provides
+highly optimized essential services used in other Mojo and Mojolicious
+classes. Most classes in Mojolicious are based on L<Mojo::Base>.
+
+Understanding L<Mojo::Base> and attributes is crucial for
+understanding Mojolicious code, since this facility is used throughout
+the framework.
+
+L<Mojo::Base> implements two services, an object constructor and
+object attribute infrastructure, expressed as two methods:
+
+=over 4
+
+=item C<new>
+
+A basic object constructor. You can pass it either a hash or a hash
+reference with attribute values to set up default attributes at construction.
+
+=item C<attr>
+
+Create attributes.  An array reference can be used to create more than
+one attribute with a single call. An optional second argument that
+must be either a B<constant> or a B<sub> reference can be used to set a
+default value. The sub reference will be excuted at accessor read time
+if there's no set value.
+
+=back
+
+L<Mojo::Base> is optimized for performance, since well implemented
+attributes can be used throughout the framework and must be very
+fast. For this reason, attribute access is optimized by compiling
+custom code (a bit lispish, but very efficient). Essentially attribute
+lookup turns into execution of an anonymous subroutine. If all the
+contents of the subroutine are static, the access can be highly
+optimized by perl runtime.
+
+To set up attribute, call the C<att> method on the class:
+
+  package CreditCard;
+  use base 'Mojo::Base';
+
+  __PACKAGE__->attr('holder'); #use __PACKAGE__ instead of package name
+  $card->attr('good_thru');                      # declare new attribute
+  $card->attr('valid_from' => '02-10');          # with default value
+  $card->attr('valid_from' => sub { ... });      # executed at read time
+                                                   unless overruled by setting a value
+  $card->attr([ qw/type card_name/ ]);           # declare multiple
+  $card->attr([ qw/type card_name/ ] => 'Visa'); # default value for all
+  
+  package Main;
+  my $card = CreditCard->new();   #or, with defaults as a list or a has reference
+  my $card = CreditCard->new(holder => 'A. N. User', type => 'Visa');
+  my $card = CreditCard->new({holder => 'A. N. User', type => 'Visa'});
+
+Note that it is not possible to add attributes to an existing object,
+attributes are properties of the class. If you try to access and
+attribute that has not been defined, you will get the following error:
+
+  Can't locate object method "type" via package "CreditCard" at <filename> line <no>
+
+In addition, since the values are not hold in a data structure but are
+compiled in the code, it is not possible to dump them easily.
+
+Setting and accessing the attributes is easy:
+
+  $card->name('A. N. User');                    # returns $card, not value
+  print 'Card holder: ' . $card->name . "\n";   # returns value
+  # chaining the call
+  print 'Default holder :' . $card->name('A. N. User')->name; . "\n"
+
+=head3 Attributes and References
+
+Since the default value for an attribute can be either a constant or a
+sub reference, it is not possible to initialize an attribute to an
+array or a has reference directly. You need to do it using an anonymous sub:
+
+  package EtcPassword;
+  use base 'Mojo::Base';
+  
+  __PACKAGE__->attr('users' => sub { [] });      # defaults to en empty array ref
+  __PACKAGE__->attr('users' => sub { [ qw/jane john jules jimmy/ ] }); 
+                                                 # or a populated one
+  __PACKAGE__->attr('user_homes' => sub { {} }); # defaults to empty hash ref
+
+You can set an attribute to a reference and use dereferencing
+semantics to query the data:
+
+  print join(', ', @{$p->users});      # print all element of the array
+  print $p->users->[0];                # print first element
+  print $p->users->[1] = 'johannes';   # set second element
+
+Please note that the same rules does not apply when using the
+constructor or the accessor, using a subroutine there stores a C<CODE>
+reference, and using the value itself is perfectly legal:
+
+  $p = EtcPassword->new;
+  $p->users([ qw/jane john jules jimmy/ ]);
+  # or just:
+  $p = EtcPassword->new(users => [ qw/jane john jules jimmy/ ] );
+
+=head3 Attributes and Objects
+
+The anonymous subroutine semantics of accessor setup makes it perfect
+for setting up use-relationships with other objects, since the
+accessor is set up at class initialization time, but the subroutine is
+only executed in the instance when the accessor is first used.
+
+For example, this is how Mojolicious application instance sets up a
+types object:
+
+  Mojolicious.pm:
+  
+  __PACKAGE__->attr(types => sub { MojoX::Types->new });
+
+At first access (but not before, so memory may be conserved if the
+object is never used), a new L<MojoX::Types> instance will be created
+and its reference stored in the accessor. From that point on, it can
+be accessed from the application object like any other attribute,
+chaining accessors and methods as you go:
+
+  # check a type using object's method:
+  $self->types->type('html');
+  # change a type using object's method:
+  $self->types->type(html => 'text/html; charset=utf-8');
+  # get all types using an accessor:
+  my $types_hashref = $self->types->types;
+
+=head3 Subclassing Constructors
+
+In most cases, a cubclass of L<Mojo::Base> does not need to implement
+its own constructor, relying instead no the parent constructor.
+
+If your class needs initialization, it must still call the parent
+class constructor to perform attribute initialization.
+
+The parent constructor performs blessing to your class for you, but
+you need to return the reference. If you wish to retain the
+constructor semantics, you should also pass the arguments to C<new()>
+to the implementation in L<Mojo::Base>:
+
+  package Something;
+  use base 'Mojo::Base';
+  
+  __PACKAGE__->attr('name' => 'a thing');
+  
+  sub new {
+      my $self = shift->SUPER::new(@_);   # call parent class, with arguments
+      # ... init ...
+      return $self;                       # return the blessed reference
+  }
+
+See L<Mojo::Base> for reference documentation and more examples.
+
+
+=head2 Support classes
+
+=begin consideration
+
+Possibly this whole section is misguided and cumbersome ... the info
+is well needed, and quite necessary to understand the code, but
+perhaps it belongs into a later section or even an appendix. Please,
+advise!
+
+=end consideration
+
+A number of L<Mojo> classes implement basic services and are not
+usually needed directly in application code: L<Mojo::Asset> for
+management of data and files in the HTTP implementation (also
+performing file streaming without loading the whole file),
+L<Mojo::Date> implementing HTTP 1.1. dates, L<Mojo::Exception> for
+exception handling with context information, L<Mojo::Loader> for class
+loading and plugin framework, L<Mojo::Log> for general logging,
+L<Mojo::Path>, an URL path container, L<Mojo::Stateful>, an abstract
+base class for state keeping objects, and many more.
+
+Most of these classes will not be used directly by the web developer,
+but will be used either by other classes or through some additional
+syntactic layer (syntax sugar).
+
+A number of classes in L<Mojo> implement generally useful services and
+are often used both in the framework itself and in applications.
+
+=head3 Mojo::ByteStream
+
+L<Mojo::ByteStream> provides portable text and bytestream manipulation
+functions, such as encoding and decoding, simple searching (C<< my
+$position = $b->contains('string') >>), line-by-line reading (C<< my
+$line = $b->get-line >>), quoting (including quoted printable), HTML
+and XML escaping, URL escaping, URL sanitizing and stringification
+(C<< my $string = $b->to_string >>).
+
+L<Mojo::ByteStream> is a frequently-used class, so it can export its
+constructor as C<b()>. This syntax sugar in combination with method
+chaining facilitates the use considerably:
+
+  use Mojo::ByteStream 'b';
+  
+  $value = b($value)->decode($charset)->to_string;
+
+is the same as:
+
+  use Mojo::ByteStream ;
+  
+  $bs = Mojo::ByteStream->new($value);
+  $bs->decode($charset)
+  $value = $bs->to_string;
+
+See L<Mojo::ByteStream> for complete reference documentation.
+
+=head3 Mojo::JSON
+
+L<Mojo::JSON> is a minimalistic implementaton of RFC
+4627 (L<http://www.ietf.org/rfc/rfc4627>), aka
+JSON (L<http://www.json.org/>.
+
+JSON (JavaScript Object Notation) is a lightweight data-interchange
+format, supported by most JavaScript libraries and scripting
+languages.  It is easy for humans and for machines. JSON is a text
+format that is completely language independent but uses familiar
+conventions and is much easier to parse and generate than XML, making
+JSON an ideal data-interchange language for the web.
+
+JSON is built on two structures:
+
+A collection of name/value pairs, mapped to perl an ordered list of
+values, mapped to perl arrays. L<Mojo::JSON> does not support blessed
+references.
+
+In Mojolicious, JSON is supported as an output format by the rendering
+subsystem (the C<json> rendering handler, see L<MojoX::Renderer> and
+as a configuration language via a plugin
+(L<Mojolicious::Plugin::JsonConfig>).
+
+If you wish to receive and parse JSON messages, ie. in an AJAX or
+WebSocket context, you will need to use L<Mojo::JSON> directly in your
+controller.
+
+JSON format should look familiar enough:
+
+       JSON             Perl
+
+    [1, -2, 3]       [1, -2, 3]
+    {"foo": "bar"}   {foo => 'bar'}
+
+See L<Mojo::JSON> for reference documentation, JSON web
+page at L<http://www.json.org/> for more info and RFC
+4627 (L<http://www.ietf.org/rfc/rfc4627>) for a formal specification.
+
+
+=head3 Mojo::Template
+
+Mojo contains an efficient versatile perlish templating system,
+implemented in L<Mojo::Template>. See L<Mojo::Template> for templating
+reference documentation and some examples.
+
+The templating system is used not only for web templates, but also for
+services such as code/scaffolding generation and the like. Templates
+get compiled into a perl function call and are very efficient.
+
+For web applications, the templating implementation is wrapped with
+additional services and functionality, implemented as a plugin:
+L<Mojolicious::Plugin::EpRenderer>.
+
+The plugin, enabled by default, registers the templating engine as the
+handler for C<*.ep> (embedded perl) files (handlers explained in L</Renderer,
+Handlers, Helpers, Templating engines>).
+
+There is an older, simpler version with less fuctionality
+(L<Mojolicious::Plugin::EplRenderer>, registers as handler for
+C<*.epl> (embedded perl lite) files).
+
+See L</Templates in Mojolicious> for documentation on web templating
+and examples.
+
+=head2 Command System
+
+L<Mojo::Commands> is the interactive command line interface to the
+L<Mojo> framework. It will automatically detect available commands in
+the L<Mojo::Command> namespace (or others if so instructed).  Commands
+are implemented by subclassing L<Mojo::Command>.
+
+The command subsystem is normally started at the end of the
+application startup script by calling (in C<Mojo> or C<Mojolicious>):
+
+  Mojo::Commands->start;
+
+In L<Mojolicious::Lite>-based applications, the command subsystem is
+started with a call to the exported function C<< shagadelic(<args>)
+>>, which calls C<< Mojolicious::Lite->start(@_) >>, setting up the
+environment and starting up the command system (inherited from
+L<Mojolicious>).
+
+(If you are underage and have problems calling C<shagadelic()>, you
+can call C<< app->start() >>, which is, in fact, the same.)
+
+The command system provides on-line help (C<help>), application
+framework generation services (C<generate>), information/utility
+commands (C<version>, C<test>, C<generate makefile|psgi>, for
+C<Mojolicious> applications also C<routes> and for
+L<Mojolicious::Lite> C<inflate>) and start-up commands (C<daemon>,
+C<daemon_prefork>, C<cgi>, C<fastcgi>, C<get>). See L</MOJOLICIOUS IN
+PRODUCTION> for advice on choosing a suitable mode for running your
+application in production environment.
+
+Mojolicious command system is fully documented in L<Mojo::Commands>. Use the
+help system to get full information on available options:
+
+    mojo[licious]
+    mojo[licious] help
+    mojo[licious] help <command>
+    mojo[licious] generate
+    mojo[licious] generate help
+
+To create a simple application and start it in auto reload mode (so
+that it reloads itself if you edit the files), use:
+
+    mojolicious generate app AppName
+    cd AppName
+    ./script/appname daemon --reload
+    <load the page at the address provided>
+    <edit application files>
+    <reload page>
+
+Since L<Mojolicious::Lite> applications are contained in a single
+file, in the case of a "lite" application, this becomes simply:
+
+    mojolicious generate lite_app appname
+    ./appname daemon --reload
+    <load the page at the address provided>
+    <edit application script>
+    <reload page>
+
+=head2 HTTP server and client implementations
+
+L<Mojo> implements a full HTTP 1.1 client and servers stack, with
+support for IPv4 and WebSockets, abilities to listen on multiple
+addresses and ports and optional support for IPv6, and SSL (if
+suitable perl modules are installed).
+
+The stack is implemented in several classes that act together and
+interact with the application:
+
+=over 4
+
+=item L<Mojo::Server>
+
+L<Mojo::Server> is an abstract HTTP server base class with different
+implementations:
+
+=over 8
+
+=item L<Mojo::Server::Daemon>
+
+L<Mojo::Server::Daemon> is an asynchronous IO HTTP 1.1 And WebSocket Server.
+
+=item L<Mojo::Server::Daemon>
+
+L<Mojo::Server::Daemon> is an asynchronous IO HTTP 1.1 And WebSocket Server.
+
+=item L<Mojo::Server::Daemon::Prefork>
+
+L<Mojo::Server::Daemon::Prefork> is a preforking version of the HTTP
+1.1 And WebSocket Server.
+
+=item L<Mojo::Server::Daemon::CGI>
+
+L<Mojo::Server::Daemon::CGI> is a simple and portable CGI (common
+gateway interface) implementation of the application server.
+
+=item L<Mojo::Server::Daemon::FastCGI>
+
+L<Mojo::Server::FastCGI> is a portable pure-Perl FastCGI implementation.
+
+=back
+
+=item L<Mojo::IOLoop>
+
+L<Mojo::IOLoop> is a minimalistic event loop for TCP clients and
+servers. It optionally supports alternative polling implementations
+(L<IO::KQueue>, L<IO::Epoll> and connection types
+(IPv6 with L<IO::Socket::INET6>, TSL with L<IO::Socket::SSL>. The support is
+automatically activated if the support modules are installed on the
+system.
+
+=item L<Mojo::Transaction>
+
+The server's application interface is centered around the concept of a
+B<transaction> (usually represented as C<$tx> variable or C<< ->tx >>
+attribute in C<Mojo> code and accessed through a controller C<$c> with
+a C<< ->tx attribute >> in C<Mojolicious> code). L<Mojo::Transaction>
+is an abstract base class with two implementations, the HTTP
+transaction L<Mojo::Transaction:HTTP> and the WebSocket transaction
+L<Mojo::Transaction::WebSocket>.
+
+L<Mojo::Transaction> and most of the classes it uses are
+implementations of L<Mojo::Stateful>, an abstract base class for state
+keeping objects.
+
+L<Mojo::Transaction> uses request and response message objects and
+together with them encapsulates the state of the connection and
+transaction in the server as it is driven by L<Mojo::IOLoop>.
+
+=item L<Mojo::Message>
+
+L<Mojo::Message> is an abstract base class for HTTP 1.1 messages with
+two implementations for HTTP request (L<Mojo::Message::Request> and
+response L<Mojo::Message::Response>).
+
+Messages use a number of other classes:
+
+=over 8
+
+=item L<Mojo::Headers>
+
+L<Mojo::Headers> is a container and parser for HTTP headers.
+
+=item L<Mojo::Content>
+
+L<Mojo::Content> is an abstract base class for HTTP 1.1 content with
+implementations for multi-part and single content models
+(L<Mojo::Content::Multipart>, L<Mojo::Content::Multipart>).
+
+=item L<Mojo::URL>
+
+L<Mojo::URL> implements a subset of RFC 3986
+(L<http://www.ietf.org/rfc/rfc3986>), for Uniform Resource Locators,
+and is based on L<Mojo::Path>. It provides interfaces for processing,
+accessing and constructing URLs. It represents URL in request.
+
+It is also accessible at the application level, where the request and
+response URLs are normally accessed indirectly through syntactic sugar
+of C<< ->url_for() >> and C<< ->redirect_to() >> in default
+controller.
+
+See L<Mojo::URL>, also L<Mojolicious::Controller/url_for> and
+L<Mojolicious::Controller/redirect_to> for reference documentation.
+
+See description of C<< ->url_for() >> and C<< ->redirect_to() >> with
+examples in L</CONTROLLERS AND ACTIONS>.
+
+=item L<Mojo::Parameters>
+
+L<Mojo::Parameters> is a container for form parameters and is used in
+the request object of the transaction and for parameter parsing of URLs.
+
+=item L<Mojo::Cookie>
+
+L<Mojo::Cookie> is an abstract base class for HTTP 1.1 cookies with
+implementations for request and response (L<Mojo::Cookie::Request>,
+L<Mojo::Cookie::Response>).
+
+=item L<Mojo::Uploads>
+
+L<Mojo::Cookie> is a container for uploads.
+
+=back
+
+=item Support classes:
+
+=over 8
+
+=item L<Mojo::Filter::Chunked>
+
+L<Mojo::Filter::Chunked> implements HTTP 1.1 chunked transfer encoding.
+
+=item L<Mojo::Date>
+
+L<Mojo::Date> implements HTTP 1.1 date and time functions according to RFC2616.
+
+=item L<Mojo::Log>
+
+L<Mojo::Log> is a simple logger for Mojo projects.
+
+=item L<Mojo::Asset>
+
+Mojo::Asset is an abstract base class for assets with implementations
+for file and memory assets (L<Mojo::Asset::File> and
+L<Mojo::Asset::Memory>).
+
+=back
+
+=back
+
+=head3 HTTP Client
+
+HTTP Client (ie., User Agent) is implemented using the same components
+(and some others, such as L<Mojo::CookieJar>. It also supports full
+featured asynchronious IO HTTP 1.1 and WebSocket connections with
+optional IPv6, TLS, "epoll" and "kqueue" support. The client supports
+C<get>, C<head>, C<put>, C<post> and C<delete> HTTP "verbs".
+
+See L</USING MOJO HTTP CLIENT> for further information.
+
+=head3 Using The Transaction Interface
+
+The API (application interface) to the server stack in Mojo is
+encapsulated in the transaction. The server is driven by IO loop using
+call-backs set up by the server at its initialization, while the state
+of the transaction is kept in the transaction object and its request
+and response objects.
+
+This is a low-level interface, to be used while extending the
+framework or writing plugins. Applications should be using a
+higher-level interface provided by L<Mojolicious> or a suitable
+plugin. The interface is fully documented in L<Mojo::Transaction>.
+To fully understand the interactions with C<Mojo::Transaction>, see
+also L<Mojo::Stateful> and the implementation of its interface and state
+machine in C<Mojo::Transaction>.
+
+The transaction object provides access to the B<local connection>,
+B<remote connection>, B<request> (with B<request type>, B<URL>,
+B<parameters>, B<cookies>, B<content>, B<uploads> and direct access to
+B<request environment>) and B<response> (with B<response code>,
+B<message> and B<cookies>).
+
+Some of the more important attributes of L<Mojo::Transaction>:
+
+=over 4
+
+=item C<connection>
+
+    my $connection = $tx->connection;
+    $tx            = $tx->connection($connection);
+
+Connection identifier on socket. XXX add what this usually is.
+
+=item C<local_address>, C<local_port>
+
+    my $local_address = $tx->local_address;
+    $tx               = $tx->local_address($address);
+ 
+    my $local_port = $tx->local_port;
+    $tx            = $tx->local_port($port);
+ 
+    my $remote_address = $tx->remote_address;
+    $tx                = $tx->remote_address($address);
+ 
+    my $remote_port = $tx->remote_port;
+    $tx             = $tx->remote_port($port);
+
+=back
+
+Some of the more important methods in L<Mojo::Transaction>:
+
+=over 4
+
+=item C<req>, C<res>
+
+    my $req = $tx->req;
+    my $res = $tx->res;
+
+Transaction request and response.
+
+=item C<is_websocket>
+
+    my $is_websocket = $tx->is_websocket;
+
+Check if the connection is a WebSocket.
+
+=back
+
+See L<Mojo::Transaction> for server/IOloop-interaction methods).
+
+The request and response interfaces are usually accessed through the
+transaction's C<< ->req >> and C<< ->res >> methods. Some of them are
+available both on request and response, some of them are specific. To
+mark the use, C<< ->{msg} >> (for message), C<< ->req >> and C<< ->res
+>> will be used. I<Please note that> C<< ->{msg} >> I<is not actually
+valid syntax>.
+
+Request/response attributes:
+
+=over 4
+
+=item C<method>
+
+    my $method = $tx->req->method;
+    $req       = $tx->req->method('GET');
+
+HTTP request method or "verb", XXX ie. one of "GET", "HEAD", "POST", "PUT", "DELETE".
+
+=item C<url>
+
+    my $url = $tx->req->url;
+    $req    = $tx->req->url(Mojo::URL->new);
+
+HTTP request URL, defaults to a L<Mojo::URL> object.
+
+=item C<content>, C<headers>
+
+    my $content = $tx->req->content;
+    $req    = $tx->req->content(Mojo::Content::Single->new);
+    my $headers = $tx->req->headers;
+    $req    = $tx->req->header(Mojo::Headers->new);
+
+Access to content and headers of a request.
+
+=item C<params> and C<query_params>
+
+    my $params = $tx->req->params;         # GET and POST
+    my $params = $tx->req->query_params;   # GET only
+
+All C<GET> (and for C<params> also C<POST>) parameters, defaulting to
+a L<Mojo::Parameters> object.
+
+=item C<env>
+
+    my $env = $tx->req->env;
+    $req    = $tx->req->env({});
+
+Direct access to the environment hash if available.
+
+=item C<default_charset>
+
+    my $charset = $tx->req->default_charset;
+    $req    = $tx->req->message->default_charset('UTF-8');
+
+Default charset used for form data parsing.
+
+=back
+
+Request/response XXX methods:
+
+=over 4
+
+=item C<body>
+
+    my $string = $tx->{msg}->body;
+    $message   = $tx->{msg}->body('Hello!');
+  
+    $counter = 1;
+    $message = $tx->{msg}->body(sub {
+        my $self  = shift;
+        my $chunk = '';
+        $chunk    = "hello world!" if $counter == 1;
+        $chunk    = "hello world2!\n\n" if $counter == 2;
+        $counter++;
+        return $chunk;
+    });
+
+Helper for simplified content access.
+
+=item C<body_params>
+
+    my $params = $tx->{msg}->body_params;
+
+Access to C<POST> parameters. XXX difference with above attributes?
+
+=item C<body_size>
+
+    my $size = $tx->{msg}->body_size;
+
+Size of the body.
+
+=item C<to_string>
+
+XXX
+
+=item C<build>, C<build_headers>, C<build_body>
+
+    my $string = $tx->{msg}->build;
+    my $string = $tx->{msg}->build_headers;
+    my $string = $tx->{msg}->build_body;
+
+Render the whole message, headers or body.
+
+=item C<cookie>
+
+    my $cookie  = $tx->{msg}->cookie('foo');
+    my @cookies = $tx->{msg}->cookie('foo');
+
+Access a request/response cookie. XXX explain list context
+
+=item C<cookies>
+
+    my $cookies = $tx->{msg}->cookies;
+    $req        = $tx->{msg}->cookies(Mojo::Cookie::Request->new);
+    $req        = $tx->{msg}->cookies({name => 'foo', value => 'bar'});
+
+Access request/response cookies. XXX expand, also on
+Mojo::Cookie::Request, perhaps just in the cookie section.
+
+=item C<param>
+
+    my $param = $tx->req->param('foo');
+
+Access C<GET> and C<POST> parameters, defaults to a L<Mojo::Parameters>
+object. XXX expand
+
+=item C<upload>, C<uploads>
+
+    my $upload  = $tx->req->upload('foo');
+    my @uploads = $tx->req->upload('foo');
+    my $uploads = $tx->req->uploads;
+
+Access specific or all file uploads. Actually implemented in
+L<Mojo::Message>, so the methods are available also on response
+object. XXX
+
+=item C<proxy>
+
+    my $proxy = $tx->req->proxy;
+    $req      = $tx->req->proxy('http://foo:bar@127.0.0.1:3000');
+    $req      = $tx->req->proxy(Mojo::URL->new('http://127.0.0.1:3000'));
+
+Proxy URL for message.
+
+=item C<is_secure>
+
+    my $secure = $tx->req->is_secure;
+
+Check if connection is secure.
+
+=back
+
+XXX Add some examples here ... And references to later sections.
+
+See L<Mojo::Message>, L<Mojo::Message::Request> and L<Mojo::Message::Response> for full
+reference documentation.
+
+=head2 Mojo's Application Interface
+
+L<Mojo> is a framework foundation (or I<meta-framework>, pick your
+moniker), so it does not define a high-level interface to the
+transaction. Instead, it provides an abstract method C<< ->handler >>
+that your application can implement to handle the transaction.
+
+    $tx = $mojo->handler($tx);
+
+The handler is the main entry point to your application or framework
+and will be called for each new transaction. An application or
+framework built on C<Mojo> should implement its transaction handling
+interface by implementing a C<< ->handler >> method.
+
+L<Mojo> also implements the C<< ->start >> method for application
+start. It sets up C<$ENV{MOJO_APP}> environment variable and starts
+the application command system (see L</Command System>) which performs
+the actual application start and handover to an implementation of L<Mojo::Server>:
+
+    Mojo->start;
+    Mojo->start('daemon');  # start in daemon mode: Mojo::Server::Daemon
+
+L<Mojo> also implements a number of attributes, such as C<< ->client
+>> to access a full featured HTTP 1.1 client for use in your
+applications, C<< ->home >> that stringifies to the path of the home
+directory of your application and C<< ->log >> to access the logging
+layer of your application.
+
+See L<Mojo> for reference documentation.
+
+=head2 MojoX: Dispatchers, Controllers, Renderer
+
+C<MojoX> introduces a number of new concepts:
+
+=over 4
+
+=item dispatcher
+
+B<Dispatcher> finds the correct action for the given request. C<MojoX>
+implements two dispatchers, L<MojoX::Dispatcher::Static> for serving
+static types, and L<MojoX::Dispatcher::Routes> for dynamic dispatching
+based on the routes concept (see L<Dispatching with Routes> for
+explanation).
+
+The static dispatcher is simple: it has three attributes: C<type>, a
+MIME-type database (L<MojoX::Types>) to map files to proper MIME
+types, C<prefix> to remove from the requested URL and C<root> to add
+to the request path to generate the correct file system path. It is
+accessed by two general methods, C<dispatch($c)> is called with a
+controller object and is the normal way to call the dispatcher, while
+C<serve($c, '/path/to/file')> can be used to serve a specific file for
+a request.
+
+The routes dispatcher merits its own section: L<Routes Dispatcher>
+
+=item controller
+
+B<Controller> is the web application developer side of the
+"controller" from the Model-View-Controller paradigm: it defines
+interfaces to access the transaction and support systems to connect to
+the view (rendering, in L<Mojolicious>). L<MojoX::Contoller> is
+actually an abstract base class for
+L<MojoX::Session::Cookie::Controller> (with cookie and session
+support) and L<MojoX::Dispatcher::Routes::Controller> to integrate
+with routes.
+
+The routes controller merits its own section: L<Routes Controller>
+
+=item stash
+
+The B<stash> is a request-scoped hash for data used by controller,
+renderer and their components to produce content. It is used as a
+general data-passing mechanism between these elements and is
+automatically populated by parameters, route named parameters etc. It
+is a non-blessed hash reference shared between controller, renderer
+and its handlers/helpers.
+
+=item renderer
+
+The B<renderer> is implemented in L<MojoX::Renderer>. It turns the
+data in the stash into content suitable for serving to the client.  It
+has a flexible architecture, supporting multiple handlers
+(template/file format engines) and helpers (sub-engines).
+
+The renderer also merits its own section: Routes Dispatcher and Controller
+L<Renderer, Handlers, Helpers, Templating engines>
+
+=back
+
+=head3 Routes Dispatcher
+
+The routes dispatcher is usually instantiated and set up in the
+application start up code (see L<Mojolicious Application Interface>
+for examples in the context of a Mojolicous application):
+
+     my $r = MojoX::Dispatcher::Routes->new;
+     $r->route('/:controller/:action/:id')->to('example#welcome', id => 1);
+
+XXX interface with explanations, hopefully understanding of 'hiding'
+
+The actual routes semantic is defined in L<MojoX::Routes>
+
+XXX interface with explanations, and very interesting explanations these will be
+
+
+=head3 Routes Controller
+
+The controller, usually written as C<$c> in the examples, is the base
+class for most of the application code, since routes dispatcher
+dispatches requests to controller (an application class) and action
+(its method). So you should think of the controller more in these
+terms:
+
+    warn "The argument for 'month' was " . $self->param('month');
+    my $month  = $self->param('month');
+    $self->render_text("The month param was $month.");
+
+=for consideration
+XXX explore this whole placeholder/params over
+param/stash/template_namespace thing more
+
+XXX controller interface here
+
+Controller and Action
+
+=head3 Renderer, Handlers, Helpers, Templating engines
+
+<ask_> <%= $self->render_partial('_common/code'); %> -- shouldn't the result of the _common/code template be html escaped?
+<sri> ask_: nope, render results are a special case like in rails and django
+<sri> same for some .ep helpers
+<ask_> what's rails or django?  :-)  (just kidding).
+<ask_> ok -- what's the mojo way to escape the render result then?
+<sri> the result is wrapped in a Mojo::ByteStream object, so you should be able to just append ->to_string and force escaping
+<sri> ->render_partial(...)->to_string
+<sri> the Mojo::ByteStream object is what prevents escaping
+<ask_> cool, thanks.
+* sri makes a note to mention it in a guide
+
+
+
+=head2 Mojolicious Application Interface
+
+L<Mojolicious> is based on the L<Mojo> framework foundation /
+meta-framework and extends its interface.
+
+XXX this is not clear and needs cleanup:
+
+The core of the transaction interface is its implementation of the C<<
+->handler >> method, which sets up the environment for Mojolicious
+applications.
+
+XXX full Mojolicious interface here:
+
+
+=begin note
+
+"process":  $mojo->process($c);
+
+This method can be overloaded to do logic on a per request basis, by
+default just calls dispatch.  Generally you will use a plugin
+or controller instead of this, consider it the sledgehammer in
+your toolbox.
+
+=end note
+
+
+A Mojolicious application is initialized by a call to the main
+application package method C<startup> at server start, usually used to
+set-up routes and perhaps initialize the model:
+
+  package Test;
+
+  use strict;
+  use warnings;
+
+  use base 'Mojolicious';
+
+  # This method will run once at server start
+  sub startup {
+      my $self = shift;
+ 
+      # Routes
+      my $r = $self->routes;
+ 
+      # Default route
+      $r->route('/:controller/:action/:id')
+        ->to(controller => 'example', action => 'welcome', id => 1);
+  }
+ 
+  1;
+
+(This is where the C<$ENV{MOJO_APP}> environment variable, set up by
+the application script is used by the command system to locate the
+right package.)
+
+When Mojolicios application is called with a transaction, the
+Mojolicious C<handler> instantiates the default controller class
+(usually L<Mojolicious::Controller>, with a rather contorted
+inheritance tree of C<isa> L<MojoX::Dispatcher::Routes::Controller>
+C<isa> L<MojoX::Session::Cookie::Controller> isa
+L<MojoX::Controller>), set with the C<controller_class> attribute)
+with attributes for the application (C<app>), stash (C<stash>) and the
+transaction C<tx>) and call C<< ->process >> on the class.
+
+Then the default controller and its dispatcher know how to find the right
+application controller and action for each request and maps them to the
+application's package and its method:
+
+   ->to(controller => 'example', action => 'welcome')  # Test::Example->welcome
+
+Usually, the controller is a subclass of the default controller with
+all its functionality (renderers, handlers, templating engines,
+helpers etc.:
+
+    package Test::Example;
+    ...
+    use base 'Mojolicious::Controller';
+
+XXXX
+
+by calling C<process()>, an ideal entry point for subclassing:
+
+    sub process { shift->dispatch(@_) }
+
+XXXX
+
+, a request is first subject to B<dispatching>, where
+the proper action is found based on the URL path of the request. There
+are two dispatchers: first L<MojoX::Dispatcher::Static> is called, a
+simple dispatcher for static files, by default serving up files found
+under C<public/>. If the static dispatcher fails,
+L<MojoX::Dispatcher::Routes> is tried.
+
+XXXX
+
+=head2 L<Mojolicious::Lite> Application Interface
+
+XXX Explain how it is implemented;
+How we have only one controller;
+How exactly we parse for templates;
+How bridges come to be ...
+
+
+=head1 CONTRIBUTING TO L<Mojolicious>
+
+Mojolicious is developed using a GitHub repository
+(L<http://github.com/kraih/mojo>). Developer communicate primarily on
+IRC (C<#mojo@irc.perl.org>) and using a Google groups mailing list
+(L<http://groups.google.com/group/mojolicious>).
+
+If you want to submit a patch, the best way to do it is to set up a
+repository on GitHub (forking is offered at the repostory-to-be-forked
+after you have logged in, more info at
+L<http://help.github.com/forking/>) and set it up to track the
+upstream. The set-up is different from what you would do if it was
+your project, since you pull from upstream and push to your own
+repository. This is how you can do that:
+
+  $ git clone git@github.com:<your-name-here>/mojo.git #private URL!
+  $ cd mojo
+  $ git remote add upstream git://github.com/kraih/mojo.git
+
+Then you should clone the repository locally using C<git>, branch it and
+make your changes in a new branch:
+
+  $ git branch <meaningful-feature-or-bug-name>
+  $ git checkout <meaningful-feature-or-bug-name>
+
+This is the time to do your work. Do not forget to prepare suitable
+tests (see bellow) and update/create reference documentation.  When
+finished, this is how you publish your changes:
+
+  $ git add <your-files>
+  $ git commit -m <meaningful-name>
+  $ git push
+
+Now you should use the B<Pull Request> facility at GitHub to notify
+the developers, and probably say so on IRC or the mailing list. This
+approach will permit the core developers to merge in your changes.
+
+At the same time, you will be able o track the upstream in your
+master branch:
+
+  $ git checkout master           # back to the master branch
+  $ git fetch upstream master
+  $ git merge upstream/master
+
+The fetch/merge combo can be expressed also as:
+
+  $ git pull upstream master
+
+You can optimize this by changing the default set-up and add this to
+the C<.git/config> file in your repository:
+
+  [branch "master"]
+          remote = upstream
+          merge = master
+
+No you can fetch and merge upstream into your master simply by saying:
+
+  $ git pull upstream
+
+To start a new patch, repeat the branching and check-out process above.
+
+C<git> will take care of efficiency and facilitate the process for
+you. There is plenty of documentation for new C<git> users with the
+package, on C<git> site at L<http://git-scm.com/> and at GitHub:
+L<http://help.github.com/>.
+
+=head3 Requirements for code submission
+
+Please do not forget that Mojolicious is developed with an agile
+development model and much effort is invested into having as complete
+testing coverage as possible. For that reason, bug reports and feature
+patches generally B<require suitable tests>. If you can produce a test
+for a bug you have found, the chances of getting a quick fix are much
+better.
+
+Submitting a test is best done with the same method or, alternatively,
+you can send the file to the mailing list or use C<nopaste> (perhaps
+L<http://mojopaste.com/> or L<http://showmetheco.de/>) on the C<#mojo>
+IRC channel.
+
+In addition, you should follow the Mojo coding guidelines, as
+described in L<Mojolicious::Guides::CodingGuidelines>.
+
+(If you are hopeless when you realize that a Futurama (or The
+Simpsons) quote is needed for each file, do not despair:
+L<http://www.google.si/search?q=futurama+quotes>, for example
+L<http://www.thatwasfunny.com/category/cartoons/futurama>. Try not to
+repeat existing quotes in the code.)
+
+=head2 Extending Mojo and Mojolicious: L<MojoX> and Mojolicious Plugins
+
+The proper way to extend the framework depends on the kind of
+extension in question. The developer needs to remember that L<Mojo> is
+the framework for framework development, to be extended in the
+L<MojoX> namespace, while L<Mojolicious> is an implementation of a web
+framework on top of L<Mojo> with some <MojoX> extensions.
+
+Therefore, if the extensions bring in functionality that is not
+strictly specific to L<Mojolicious>, it should be implemented as a
+L<Mojo> extension in L<MojoX> namespace. If it can be used under
+L<Mojolicious>, a plugin wrapper based on L<Mojolicious::Plugin>
+should be added to facilitate the integration in L<Mojolicious> and
+L<Mojolicious::Lite> applications.
+
+If the extension functions strictly in the context of L<Mojolicious>,
+it should be implemented as a Mojolicious Plugin.
+
+=head3 Extending Mojolicious with Plugins
+
+Please note that besides plugin hooks, plugins can integrate with
+renderers by adding B<handlers> and B<helpers> and with routes by adding
+B<conditions>:
+
+  # Mojolicious/Plugin/I18n.pm:
+  $app->renderer->add_helper(l => sub { shift->stash->{i18n}->localize(@_) });
+  
+  #Mojolicious/Plugin/PodRenderer.pm
+  $app->renderer->add_handler( pod => sub { ... } );
+  
+  #Mojolicious/Plugin/AgentCondition.pm
+  $app->routes->add_condition( agent => sub { ... } );
+
+See L<Mojolicious::Plugin> for reference. Plugins shipped with
+Mojolicious have a number of advanced examples.
+
+
+=head1 COOKBOOK
+
+Most of the following subsections should eventually find their proper
+home in the proper section of the handbook. They are here as a work in
+progress, and some will remain as useful tips.
+
+See L<Mojolicous::Guides::FAQ> and L<Mojolicous::Guides::Cookbook> for
+more info.
+
+=head2 Content-type and C<MIME>
+
+=head2 Language support
+
+=head2 Encodings
+
+=head2 Content types
+
+static:  vti: you can always set content_type header by yourself
+
+(11:43:21 PM) vti: look at how i server static files in pastelicious
+(11:43:26 PM) vti: and do different outputs
+(11:43:32 PM) vti: html text json
+...
+(11:45:05 PM) vti: hm, i use there types app->renderer->types->type(html => 'text/html; charset=utf-8');
+
+$res->headers->content_type('image/jpg');
+$self->render_text($binary_data);
+=> now actuall render_data!!
+
+
+=head2 Source file and template encoding
+
+Templates have an C<encoding> attribute, which, luckily, is set to
+C<UTF-8> by default.
+
+XXX No idea how to use it. A helper would be nice.
+
+vti: renderer has ->encoding option
+
+For XXX templates in __DATA__ sections, the file encoding is in effect, so
+do not forget to use C<use utf8;> if you plan to use unicode in your templates.
+
+=head2 Embedding Applications
+
+=head3 Embedding Mojolicious apps
+
+=head3 Embedding Mojolicious::Lite apps
+
+=head2 C<JSON>, C<RSS> and Atom
+
+=head2 Ajax
+
+=head2 WebSockets
+
+Ie. rendering C<JSON> directly to a WebSocket:
+sri: well, you can already do $self->send_message($self->render_partial(...));
+
+
+=head1 ACKNOWLEDGEMENTS
+
+=over 4
+
+=item Sebastiean Riedel
+
+For achieving it all
+
+=item Jan Jona Javoršek
+
+For noncomprehending comprehensively
+
+=item Anatoly Sharifulin
+
+For understanding, both meanings
+
+=item Вячеслав Тихановский [Viacheslav Tykhanovskyi]
+
+For being patently patient
+
+=item Mirko Westermeier
+
+For trying and telling
+
+=item Everyone at C<#mojo@irc.perl.org>
+
+For clues and contributions
+
+=back
+
+=begin consideration
+
+IOLoop:
+Optional modules L<IO::KQueue>, L<IO::Epoll>, L<IO::Socket::INET6> and
+L<IO::Socket::SSL> are supported transparently and used if installed.
+
+How to set the CA file? What is the default?
+--listen https://*:port:tls_cert:tls_key
+Cert auth ideas?
+
+Daemon:
+$c = connection?
+
+MojoX/Dispatcher/Static.pm:
+looks up type via extension, defaults to text/plain
+how to extend types?
+
+MojoX/Dispatcher/Routes.pm:
+capures go to stash
+then params get captures mixed in hmm
+
+
+Old typo!
+Typo: MojoX/Dispatcher/Routes/Controller.pm
+L<MojoX::Dispatcher::Routes::Controller> inherits all attributes from
+L<MojoX::Session::Simple::Controller> AND implements the following 
+attributes.
+
+
+Tests:
+<sri> vti: i always load Test::Mojo after Test::More
+<vti> good to know :)
+...
+* sri sets vti on fire
+<vti> maybe that should go into Test::Mojo docs? so noone else will get into this trouble
+<sri> i did not expect anyone trying to use Test::Mojo without a plan
+...
+<vti> sri: doesn't work
+<sri> Oo
+<sri> vti: then your app might be screwed up
+<sri> you need to pause before it leaves the routes dispatcher or plugin hooks run
+<sri> if you pause after that they run twice
+<sri> and there is nothing that could be done
+
+
+10:52:35 PM) sri: you should get an error about the pid file
+(10:53:20 PM) vti: sri: at least named after my app ;p
+(10:53:29 PM) vti: and no errors reported
+(10:53:35 PM) xantus: you can pass --lock= and --pid
+
+
+(05:54:50 AM) stephen: Any clever way to have Mojo download a file as an attachment?
+(06:29:09 AM) stephen: Can I subclass MojoX::Dispatcher::Static?
+(07:40:44 AM) janus: can't you just set a content-disposition header
+first and refactor the code later?
+(07:43:15 AM) janus: still i assume that's a question that might
+better be placed in the faq or something
+
+
+http://www.slideshare.net/sharifulin/mojo-en
+http://sharifulin.livejournal.com/tag/mojo
+
+Twitter: @kraih @vtivti @sharifulin
+Juick:   @vti @sharifulin
+
+<marcus> you should see kane's black perl talks.
+http://oslopm.blip.tv/file/1903160/
+
+(04:51:23 AM) sri: MOJO_RELOAD can't handle everything
+(04:51:45 AM) sri: if your screw up is big enough it won't recover
+
+(09:19:00 AM) sri: "PATH_INFO=/foo ./myapp.pl" will just work :)
+(09:20:01 AM) sri: simplicity++
+(09:20:29 AM) sri: "./myapp.pl get /" is still easier though for testing
+
+=end
+
+=begin obsoleted
+
+=head1 TRANSACTION WALK-THROUGH
+
+I<The Pill-Cam View (tm)>
+
+B<XXX Note to self>: A step-by-step walk-through of processing of a
+single transaction with Daemon and Routes (and perhaps a sprinkle of
+Static), complete with actions, handlers, helpers, templates etc. En
+lieu of understanding the architecture, basically. Should have helped writing
+the previous section. But is probably now pointless.
+
+L<Mojo::IOPoll> accepts the TCP connection.
+
+One of L<Mojo::Server> processes HTTP connection in conjunction with
+the transaction (C<$tx>). Transaction encapsulates request (C<$req>)
+and response (C<$res>) objects, accessible via its attributes
+(C<<$tx->??>>) and serves as the state machine for a transaction,
+meaning that only the combination of the three components represent a
+full HTTP 1.1 server.
+
+XXX Note on WebSockets here.
+
+XXX ...
+
+<ask_> KiokuDB is very nice, FWIW.  :-)
+<sri> i'm a huge fan of couchdb
+<sri> random secret with persistence is an interesting idea
+<ask_> There's a CouchDB backend for Kioku.   In my current toy-mojo-project I use MongoDB as the backend.
+<ask_> http://www.iinteractive.com/kiokudb/arch.html
+<garfield> [ KiokuDB Architecture ]
+<sri> don't really like mongodb, bson is a deal breaker for me
+<sri> prefer memcached or rest api
+<sri> with json
+* sri expects cool websocket based json protocols in the future
+<ask_> sri: the MongoDB.pm module is easy enough to work with (and very fast).
+<ask_> (not that I disagree that JSON is nice)
+
+<GitHub86> mojo: master Sebastian Riedel * a911b4d (5 files in 4 dirs): improved PSGI support and added "psgi" command - http://bit.ly/dwRY6k
+* GitHub86 (~GitHub86@sh1-ext.rs.github.com) has left #mojo
+<sri> this turns Mojolicious::Lite apps into valid .psgi files :)
+
+
+<Su-Shee> I can use lighthttpd with mojo, right?
+<sri> sure
+<Su-Shee> *sigh* I have to prepare a mojo, a ruby & ror, a comparison perl web frameworks and a moose developer lesson. 
+<Su-Shee> this is going to be an interesting setup ;)
+<sri> lighttpd got quite unpoluar recently
+<Su-Shee> why's that?
+<Su-Shee> hm. which reminds me.. do I even need a web server on its own... 
+<sri> because of nginx i guess, which is much better
+<sri> you could just use the buit in server
+* su-bzero has quit (Quit: .))
+<sri> it's quite good
+<sri> and more than enough for demonstrations
+<Su-Shee> hm, I could do a performance/load test with it anyway because I have to write a couple of test clients.
+<Su-Shee> and our load is on the db anyway; it's really not heavy httpd requests...
+<sri> prefork daemon should be fine then
+<sri> on my macbook i can tune it up to about 2k req/s
+<sri> which is much more than any framework can deliver anyway
+<Su-Shee> 2k/s?! the little perl module or nginx?
+<sri> little perl module
+<sri> nginx scales way further
+<sri> which doesn't matter much for frameworks, since they can't deliver that fast anyway :)
+* alex has quit (Read error: Connection reset by peer)
+<Su-Shee> little fluffy perl module it is. nice test. let's see how much "real web server" we really need. 
+<Su-Shee> I'm pretty sure it's more than enough for our stuff.
+<sri> for a small scale benchmark you can try "mojo daemon_prefork" and run "ab -c 30 -n 10000 -k http://127.0.0.1:3000/" against it
+<sri> or "mojo daemon_prefork --clients 10" for async io
+<sri> async scales much better but doesn't work very well with blocking dbi calls
+<Su-Shee> what we have is a couple of thousand users per installation and mostly a usally large db because the stuff large files into it. and if session stuff actually is done in dom storage, the db isn't under that much load anymore. 
+
+
+10:03:49 PM) rindolf: sri: how should I pass the POST parameters on a post query?
+(10:03:53 PM) sri: and write docs in between ;p
+(10:04:31 PM) sri: rindolf: the mojo client has a post_form method that does most of the work
+(10:05:09 PM) sri: there are many many tests using it, espcially for newer encoding checks
+
+=end

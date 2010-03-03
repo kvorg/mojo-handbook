@@ -1,0 +1,15 @@
+The purpose of this project is to compile a corpus of documentation
+for Mojo/Mojolicious.
+
+As much as possible this is to be reused for Mojolicious
+distribution. As that happens, the copyright should be reassigned to
+Mojolicious distribution author and it should be issued under the same
+conditions as the rest of the package, under its release managers decisions.
+
+The authors of the original material retain the rights to republish
+this in different context, so any contributors should probably
+contribute to the version or subsection accepted in the Mojolicious
+contribution - this is just a scratch pad, YMMV. You have been warned.
+
+All the mistakes are ours, what is true can be only found in the code
+(and perhaps reference docs).
