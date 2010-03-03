@@ -1,3 +1,5 @@
+use utf8;
+
 # author: kvorg / Jan Jona Javoršek
 # title: Mojolicios Handbook
 # comments, bugs and fixes to: jan.javorsek@guest.arnes.si
@@ -587,6 +589,7 @@ prefork
 
 =head2 Running with C<PSGI>
 
+=begin comments
 
 Deploying bootylicious under Apache with Fast CGI:
 http://getbootylicious.org/articles/2009/09/apache-fastcgi.html
@@ -680,6 +683,20 @@ http://getbootylicious.org/articles/2009/09/apache-fastcgi.html
 (12:14:17 AM) sri: thats it basically
 (12:14:52 AM) sri: each mode also gets it's own log file and the like but thats not so important
 
+(12:12:55 AM) Igneous: just curious.. what webservers are people in here using mojolicious with? anyone using it with nginx w/embedded perl?
+(12:13:18 AM) sri: nginx/fcgi mostly i think
+(12:13:30 AM) sri: not seen nginx/embedded perl yet
+(12:13:51 AM) vti: sri: i've written it ages ago, just haven't released :(
+(12:13:57 AM) und3f left the room (quit: Quit: Bye).
+(12:14:05 AM) Igneous: sri: that's dandy, thanks
+(12:14:45 AM) vti: there were some ugly warnings afair
+(12:14:50 AM) sri: Igneous: nginx and mojolicious daemon should be good too
+(12:15:05 AM) Igneous: a followup question.. I'm pretty new to the perl scene (though I know bash and lua).. what is the likelihood that I'll be able to pick up mojolicious while building on my non-existant perl knowledge?
+(12:15:35 AM) sri: Mojolicious::Lite should be good for learning
+(12:16:11 AM) sri: try the tutorial and see how far you get
+(12:16:18 AM) sri: perldoc Mojolicious::Lite
+
+=end comments
 
 =head1 COMPONENTS OF MOJOLICIOUS
 
@@ -1987,32 +2004,9 @@ http://oslopm.blip.tv/file/1903160/
 (09:20:01 AM) sri: simplicity++
 (09:20:29 AM) sri: "./myapp.pl get /" is still easier though for testing
 
-=end
+=end consideration
 
-=begin obsoleted
-
-=head1 TRANSACTION WALK-THROUGH
-
-I<The Pill-Cam View (tm)>
-
-B<XXX Note to self>: A step-by-step walk-through of processing of a
-single transaction with Daemon and Routes (and perhaps a sprinkle of
-Static), complete with actions, handlers, helpers, templates etc. En
-lieu of understanding the architecture, basically. Should have helped writing
-the previous section. But is probably now pointless.
-
-L<Mojo::IOPoll> accepts the TCP connection.
-
-One of L<Mojo::Server> processes HTTP connection in conjunction with
-the transaction (C<$tx>). Transaction encapsulates request (C<$req>)
-and response (C<$res>) objects, accessible via its attributes
-(C<<$tx->??>>) and serves as the state machine for a transaction,
-meaning that only the combination of the three components represent a
-full HTTP 1.1 server.
-
-XXX Note on WebSockets here.
-
-XXX ...
+=begin comments
 
 <ask_> KiokuDB is very nice, FWIW.  :-)
 <sri> i'm a huge fan of couchdb
@@ -2030,7 +2024,6 @@ XXX ...
 <GitHub86> mojo: master Sebastian Riedel * a911b4d (5 files in 4 dirs): improved PSGI support and added "psgi" command - http://bit.ly/dwRY6k
 * GitHub86 (~GitHub86@sh1-ext.rs.github.com) has left #mojo
 <sri> this turns Mojolicious::Lite apps into valid .psgi files :)
-
 
 <Su-Shee> I can use lighthttpd with mojo, right?
 <sri> sure
@@ -2067,4 +2060,7 @@ XXX ...
 (10:04:31 PM) sri: rindolf: the mojo client has a post_form method that does most of the work
 (10:05:09 PM) sri: there are many many tests using it, espcially for newer encoding checks
 
-=end
+=end comments
+
+=cut
+1
