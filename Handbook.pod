@@ -261,9 +261,9 @@ error code or a redirect. This is a flexible base on top of which any
 web framework can be built, and L<Mojolicious> is one such framework
 built on top of L<Mojo> HTTP 1.1 stack and a number of L<MojoX> extensions.
 
-A L<Mojolicious> application essentially subclasses L<Mojolicoius>,
+A L<Mojolicious> application essentially subclasses L<Mojolicious>,
 providing setup code in the method C<startup> to be called once at
-startup of every application instance, while most of the L<Mojolicous>
+startup of every application instance, while most of the L<Mojolicious>
 functionality and defaults (default controllers, MIME type database)
 is set up in the object creation method C<new> and can be accessed via
 the application object.
@@ -331,7 +331,7 @@ hash used for transaction-specific non persistent data storage and
 exchange, and made accessible to your application controller to
 performs whatever functions needed and store more data on the stash.
 
-It is your controller's job to implement and connections with external
+It is your controller's job to implement any connections with external
 data sources (the "model" from MVC paradigm). If you need any start-up
 initialization, you can perform it in the application's C<startup()>
 method.
@@ -1662,7 +1662,7 @@ L<Renderer, Handlers, Helpers, Templating engines>
 
 The routes dispatcher is usually instantiated and set up in the
 application start up code (see L<Mojolicious Application Interface>
-for examples in the context of a Mojolicous application):
+for examples in the context of a Mojolicious application):
 
      my $r = MojoX::Dispatcher::Routes->new;
      $r->route('/:controller/:action/:id')->to('example#welcome', id => 1);
@@ -2028,7 +2028,7 @@ Most of the following subsections should eventually find their proper
 home in the proper section of the handbook. They are here as a work in
 progress, and some will remain as useful tips.
 
-See L<Mojolicous::Guides::FAQ> and L<Mojolicous::Guides::Cookbook> for
+See L<Mojolicious::Guides::FAQ> and L<Mojolicious::Guides::Cookbook> for
 more info.
 
 =head2 Content-type and C<MIME>
