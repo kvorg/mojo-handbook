@@ -418,6 +418,7 @@ on multiple static roots:
 <garfield> [ Paste ]
 <jeff> http://showmetheco.de/ca9032597d93bad7efcf5fe00e423ed15d5ecd47
 >>
+
     <Perl>
       use lib '/home/jhorn/mojo/elite_signup/lib';
       use Apache2::Mojo;
@@ -438,9 +439,14 @@ on multiple static roots:
 <sri> jeff: my guess is that it would detect it
 <sri> all static files should be available under /signup/*
 
+=end consideration
+
+
 =head2 Dispatching with Routes
 
 =head2 Basic Routes
+
+=begin consideration
 
 When using redirect_to with named routes... is there a way to set values for the placeholders in that route?
 (03:07:35 PM) sri: memowe: redirect_to('name', foo => 'bar');
@@ -453,6 +459,8 @@ When using redirect_to with named routes... is there a way to set values for the
 <jeff> ok cool
 
  xantus: I never use trailing slashes in my routes (not sure if that matters, but I'd check that)
+
+=end consideration
 
 =head2 Advanced Capturing
 
@@ -490,12 +498,16 @@ XXX This should contain user documentation on rendering with .ep and .epl, stats
 
 =head2 Rendering in Mojolicious
 
+=begin consideration
+
 (02:09:16 AM) ask: what's the proper way to render a bit of data with Mojo::Template but not return the results to the browser?
 (02:10:00 AM) ask: (I want to render a template snippet and then return it as part of a JSON data structure)
 (02:10:11 AM) sri: ask: ->render_partial('some_template')
 (02:11:00 AM) sri: or ->render_*(..., partial => 1);
 (02:11:19 AM) sri: it will just return the result
 (02:12:03 AM) ask: sri: ah, of course - thanks.
+
+=end consideration
 
 render_text() for binary data
 
@@ -505,6 +517,26 @@ render_text() for binary data
 
 =head2 Templates in Mojolicious
 
+=begin consideration
+
+(11:40:07 AM) rindolf: Hi all. <%= $register_form %> HTML-escapes the string. How can I insert a raw string without escaping?
+(11:40:51 AM) yko left the room (quit: ).
+(11:42:48 AM) rindolf: sri: do you have any idea?
+(11:46:49 AM) rindolf: http://search.cpan.org/~kraih/Mojolicious-0.999922/lib/Mojolicious.pm - where is ->render documented?
+(11:46:51 AM) marcus: rindolf: <%==
+(11:47:54 AM) lee7: Mojo::Template says <%== Perl expression, replaced with XML escaped result %>
+(11:48:05 AM) ***lee7 scratches his ugly head
+(11:58:14 AM) marcus: lee7: that's wrong. Thanks for pointing that out
+(11:58:17 AM) marcus: sri should fix it
+(11:58:28 AM) lee7: <%= does not html-escape contents, <%== escapes it. maybe  $register_form got escaped before?
+(11:58:37 AM) marcus: lee7: the docs are wrong
+(11:58:44 AM) marcus: sri switched it to escape by default
+(11:58:53 AM) lee7: hah!
+(12:03:41 PM) sri: marcus: the docs are right, it's just a difference between .ep and .epl
+(12:21:28 PM) sri: updated pod to make it more obvious
+
+=end consideration
+
 =head2 Extending templates: Helpers
 
 =head2 Using other templating engines
@@ -512,12 +544,16 @@ render_text() for binary data
 
 =head1 SESSIONS, COOKIES, AUTHENTICATION, AUTHORIZATION
 
+=begin consideration
+
 <vti> sri: how to disable cookie savings in mojo::client?
 <sri> vti: set cookie_jar to undef
 
 sessions and performance: avoiding model access (DB or file) on every
 page read by using memcache ... http://www.youtube.com/watch?v=i6Fr65PFqfk - signed
 cookies and crucial data in the cookie and you are done
+
+=end consideration
 
 =head1 WORKING WITH FILES
 
@@ -1699,6 +1735,8 @@ Controller and Action
 
 =head3 Renderer, Handlers, Helpers, Templating engines
 
+=begin consideration
+
 <ask_> <%= $self->render_partial('_common/code'); %> -- shouldn't the result of the _common/code template be html escaped?
 <sri> ask_: nope, render results are a special case like in rails and django
 <sri> same for some .ep helpers
@@ -1710,7 +1748,7 @@ Controller and Action
 <ask_> cool, thanks.
 * sri makes a note to mention it in a guide
 
-
+=end consideration
 
 =head2 Mojolicious Application Interface
 
@@ -1958,6 +1996,8 @@ more info.
 
 =head2 Content types
 
+=begin consideration
+
 static:  vti: you can always set content_type header by yourself
 
 (11:43:21 PM) vti: look at how i server static files in pastelicious
@@ -1968,8 +2008,9 @@ static:  vti: you can always set content_type header by yourself
 
 $res->headers->content_type('image/jpg');
 $self->render_text($binary_data);
-=> now actuall render_data!!
+ => now actually render_data!!
 
+=end consideration
 
 =head2 Source file and template encoding
 
@@ -1978,10 +2019,11 @@ C<UTF-8> by default.
 
 XXX No idea how to use it. A helper would be nice.
 
+=for consideration
 vti: renderer has ->encoding option
 
 For XXX templates in __DATA__ sections, the file encoding is in effect, so
-do not forget to use C<use utf8;> if you plan to use unicode in your templates.
+do not forget to use C<use utf8;> if you plan to use Unicode in your templates.
 
 =head2 Embedding Applications
 
@@ -1995,6 +2037,7 @@ do not forget to use C<use utf8;> if you plan to use unicode in your templates.
 
 =head2 WebSockets
 
+=for consideration
 Ie. rendering C<JSON> directly to a WebSocket:
 sri: well, you can already do $self->send_message($self->render_partial(...));
 
