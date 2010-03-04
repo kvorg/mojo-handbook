@@ -205,7 +205,7 @@ See SYNOPSIS for examples and syntax.
 It is well worth to read and understand the reference manual page of
 L<Mojo::Base>, the base class for Mojo/Mojolicious projects that
 provides the general C<new> method and highly optimized attributes for
-Mojo objects, and L<Mojo::Bytestream> with its versatile portable text
+Mojo objects, and L<Mojo::ByteStream> with its versatile portable text
 and bytestream manipulation functions and the simplified C<b()> syntax.
 
 =item *
@@ -243,7 +243,7 @@ itself with its default and "lite" bindings in C<Mojolicious> namespace.
 
 The presentation here is very simplified and presented from the point
 of view of the application programmer, with as little detail on the
-server/implementation side as possible. See L<COMPONENTS OF Mojolicious> for a more detailed description.
+server/implementation side as possible. See L<COMPONENTS OF MOJOLICIOUS> for a more detailed description.
 
 The HTTP Server is the starting point of the application. For each
 HTTP request, it creates a L<Mojo::Transaction> object, usually
@@ -1036,7 +1036,7 @@ are often used both in the framework itself and in applications.
 L<Mojo::ByteStream> provides portable text and bytestream manipulation
 functions, such as encoding and decoding, simple searching (C<< my
 $position = $b->contains('string') >>), line-by-line reading (C<< my
-$line = $b->get-line >>), quoting (including quoted printable), HTML
+$line = $b->get_line >>), quoting (including quoted printable), HTML
 and XML escaping, URL escaping, URL sanitizing and stringification
 (C<< my $string = $b->to_string >>).
 
@@ -1229,7 +1229,7 @@ L<Mojo::Server::FastCGI> is a portable pure-Perl FastCGI implementation.
 L<Mojo::IOLoop> is a minimalistic event loop for TCP clients and
 servers. It optionally supports alternative polling implementations
 (L<IO::KQueue>, L<IO::Epoll> and connection types
-(IPv6 with L<IO::Socket::INET6>, TSL with L<IO::Socket::SSL>. The support is
+(IPv6 with L<IO::Socket::INET6>, TSL with L<IO::Socket::SSL>). The support is
 automatically activated if the support modules are installed on the
 system.
 
@@ -1269,7 +1269,7 @@ L<Mojo::Headers> is a container and parser for HTTP headers.
 
 L<Mojo::Content> is an abstract base class for HTTP 1.1 content with
 implementations for multi-part and single content models
-(L<Mojo::Content::Multipart>, L<Mojo::Content::Multipart>).
+(L<Mojo::Content::MultiPart>, L<Mojo::Content::Single>).
 
 =item L<Mojo::URL>
 
@@ -1300,9 +1300,9 @@ L<Mojo::Cookie> is an abstract base class for HTTP 1.1 cookies with
 implementations for request and response (L<Mojo::Cookie::Request>,
 L<Mojo::Cookie::Response>).
 
-=item L<Mojo::Uploads>
+=item L<Mojo::Upload>
 
-L<Mojo::Cookie> is a container for uploads.
+L<Mojo::Upload> is a container for uploads.
 
 =back
 
@@ -1701,7 +1701,7 @@ dispatching process:
 
 It has a number of internal methods implementing class and method
 generation and walking of the stack of routes as represented by
-L<Routes::Match>, a Routes visitor class.
+L<MojoX::Routes::Match>, a Routes visitor class.
 
 It also implements embedded application detection and dispatching
 to/from embedded applications. See L<Embedding Applications> for more
@@ -1991,7 +1991,7 @@ The proper way to extend the framework depends on the kind of
 extension in question. The developer needs to remember that L<Mojo> is
 the framework for framework development, to be extended in the
 L<MojoX> namespace, while L<Mojolicious> is an implementation of a web
-framework on top of L<Mojo> with some <MojoX> extensions.
+framework on top of L<Mojo> with some L<MojoX> extensions.
 
 Therefore, if the extensions bring in functionality that is not
 strictly specific to L<Mojolicious>, it should be implemented as a
