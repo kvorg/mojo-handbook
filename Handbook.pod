@@ -344,13 +344,13 @@ renderer L<MojoX::Renderer> will be used and data will be passed to it
 using the stash.
 
 The renderer by default tries to use a template called C<<
-<controller>/<action> >>, so <<example/welcome> in this case. The file
-has two extensions: the first is the format of the result
-(ie. C<html>), and will be used to select the correct MIME-type, while
-the second is the format of the template (by default C<.ep>). The
-format extensions is processed by looking up a list of "handlers",
-usually provided by plugins, and by default including C<.txt>, C<.ep>,
-C<.epl>, C<.json> and C<.pod>.
+<controller>/<action> >>, so C<< <example/welcome> >> in this
+case. The file has two extensions: the first is the format of the
+result (ie. C<html>), and will be used to select the correct
+MIME-type, while the second is the format of the template (by default
+C<.ep>). The format extensions is processed by looking up a list of
+"handlers", usually provided by plugins, and by default including
+C<.txt>, C<.ep>, C<.epl>, C<.json> and C<.pod>.
 
 Most of the time, the layout is in the Mojoliciuos built-in C<.ep>
 format, which is small, fast and versatile, but fully described
@@ -360,19 +360,36 @@ that can provide additional services, such as translation.
 After the renderer is finished, the control is passed back to the HTTP
 stack and it serves the response to the client.
 
-XXXX mostly not done from here on, but there are some fuller sections
-to be found.
+Complicated? It looks much simpler when you are writing an
+application, since all of this complexity is abstracted away and
+safely kept behind defaults. All you need to do is set up your routes
+and write your controllers/actions, models and views (templates).
 
+=head1 MOJOLICIOUS AND MOJOLICIOUS LITE
+
+XXX perhaps a short anatomy of the files here
 
 =head1 DISPATCHING
 
-XXX This should contain user documentation on static and routes dispatching
+Dispatching is the process of mapping the HTTP request to a specific
+action an executing that action to satisfy the request. This can be
+achieved simply by finding and serving the correct file - what we call
+B<static dispatching> - or by finding and calling the correct method
+in the application.
 
-Intro here...
+In L<Mojolicious>, the two approaches are implemented as B<static> and
+B<routes dispatcher> and the framework in fact attempts a static
+dispatch for each request, only trying a routes dispatch if it cannot
+satisfy the reqeuest simply with a file.
 
 =head2 Dispatching Static Files
 
 C<MojoX::Dispatcher::Static>
+
+XXXX mostly not done from here on, but there are some fuller sections
+to be found.
+
+=begin consideration
 
 (03:38:40 PM) doubi: I have my mojolicious app in a subdirectory, but it keeps looking for static things like css and js under the top level site folder. How can I make it look in the subdir, where app is?
 (03:50:24 PM) sri: doubi: you can set $app->static->prefix
@@ -401,6 +418,7 @@ on multiple static roots:
 <garfield> [ Paste ]
 <jeff> http://showmetheco.de/ca9032597d93bad7efcf5fe00e423ed15d5ecd47
 >>
+
     <Perl>
       use lib '/home/jhorn/mojo/elite_signup/lib';
       use Apache2::Mojo;
@@ -421,9 +439,14 @@ on multiple static roots:
 <sri> jeff: my guess is that it would detect it
 <sri> all static files should be available under /signup/*
 
+=end consideration
+
+
 =head2 Dispatching with Routes
 
 =head2 Basic Routes
+
+=begin consideration
 
 When using redirect_to with named routes... is there a way to set values for the placeholders in that route?
 (03:07:35 PM) sri: memowe: redirect_to('name', foo => 'bar');
@@ -436,6 +459,8 @@ When using redirect_to with named routes... is there a way to set values for the
 <jeff> ok cool
 
  xantus: I never use trailing slashes in my routes (not sure if that matters, but I'd check that)
+
+=end consideration
 
 =head2 Advanced Capturing
 
@@ -473,12 +498,16 @@ XXX This should contain user documentation on rendering with .ep and .epl, stats
 
 =head2 Rendering in Mojolicious
 
+=begin consideration
+
 (02:09:16 AM) ask: what's the proper way to render a bit of data with Mojo::Template but not return the results to the browser?
 (02:10:00 AM) ask: (I want to render a template snippet and then return it as part of a JSON data structure)
 (02:10:11 AM) sri: ask: ->render_partial('some_template')
 (02:11:00 AM) sri: or ->render_*(..., partial => 1);
 (02:11:19 AM) sri: it will just return the result
 (02:12:03 AM) ask: sri: ah, of course - thanks.
+
+=end consideration
 
 render_text() for binary data
 
@@ -488,6 +517,26 @@ render_text() for binary data
 
 =head2 Templates in Mojolicious
 
+=begin consideration
+
+(11:40:07 AM) rindolf: Hi all. <%= $register_form %> HTML-escapes the string. How can I insert a raw string without escaping?
+(11:40:51 AM) yko left the room (quit: ).
+(11:42:48 AM) rindolf: sri: do you have any idea?
+(11:46:49 AM) rindolf: http://search.cpan.org/~kraih/Mojolicious-0.999922/lib/Mojolicious.pm - where is ->render documented?
+(11:46:51 AM) marcus: rindolf: <%==
+(11:47:54 AM) lee7: Mojo::Template says <%== Perl expression, replaced with XML escaped result %>
+(11:48:05 AM) ***lee7 scratches his ugly head
+(11:58:14 AM) marcus: lee7: that's wrong. Thanks for pointing that out
+(11:58:17 AM) marcus: sri should fix it
+(11:58:28 AM) lee7: <%= does not html-escape contents, <%== escapes it. maybe  $register_form got escaped before?
+(11:58:37 AM) marcus: lee7: the docs are wrong
+(11:58:44 AM) marcus: sri switched it to escape by default
+(11:58:53 AM) lee7: hah!
+(12:03:41 PM) sri: marcus: the docs are right, it's just a difference between .ep and .epl
+(12:21:28 PM) sri: updated pod to make it more obvious
+
+=end consideration
+
 =head2 Extending templates: Helpers
 
 =head2 Using other templating engines
@@ -495,12 +544,16 @@ render_text() for binary data
 
 =head1 SESSIONS, COOKIES, AUTHENTICATION, AUTHORIZATION
 
+=begin consideration
+
 <vti> sri: how to disable cookie savings in mojo::client?
 <sri> vti: set cookie_jar to undef
 
 sessions and performance: avoiding model access (DB or file) on every
 page read by using memcache ... http://www.youtube.com/watch?v=i6Fr65PFqfk - signed
 cookies and crucial data in the cookie and you are done
+
+=end consideration
 
 =head1 WORKING WITH FILES
 
@@ -588,6 +641,28 @@ Mojolicious with Plugins> for more information.
 =head1 USING MOJO HTTP CLIENT
 
 =head1 MOJOLICIOUS IN PRODUCTION
+
+XXX Introductions
+
+=head2 Securing a stable environment
+
+When preparing a project for release into production, you should make
+sure it is stable and functional to avoid disappointing users and
+causing unnecessary mainteinance overhead.
+
+You should prepare a set of test to make sure the application is
+acutally working in it current environment as expected.
+
+To make sure the environment remains stable, you should install
+L<Mojolicious> directly in its working environment:
+
+  $ cd <mojolicious-source-distro>
+  $ perl Makefile.PL PREFIX=<app-deployment-dir>/lib
+  $ make test && make install
+
+The C<@INC> handling is now managed by the same mechanism that finds your application files.
+
+XXX check if this actually works order-wise
 
 B<XXX Kind souls will supplement this with advice on running
 effectively under different environments.>
@@ -1554,7 +1629,7 @@ The routes dispatcher merits its own section: L<Routes Dispatcher>
 B<Controller> is the web application developer side of the
 "controller" from the Model-View-Controller paradigm: it defines
 interfaces to access the transaction and support systems to connect to
-the view (rendering, in L<Mojolicious>). L<MojoX::Contoller> is
+the view (rendering, in L<Mojolicious>). L<MojoX::Controller> is
 actually an abstract base class for
 L<MojoX::Session::Cookie::Controller> (with cookie and session
 support) and L<MojoX::Dispatcher::Routes::Controller> to integrate
@@ -1592,9 +1667,48 @@ for examples in the context of a Mojolicous application):
      my $r = MojoX::Dispatcher::Routes->new;
      $r->route('/:controller/:action/:id')->to('example#welcome', id => 1);
 
-XXX interface with explanations, hopefully understanding of 'hiding'
+The task of the dispatcher itself is simply to find a combination of
+class and method in the application namespace to fulfill the
+requirements of the controller/action specification in the routes
+request. The route matching itself is peformed by its base class,
+L<MojoX::Routes>. The dispatcher has a simple interface. It defines
+three attributes:
 
-The actual routes semantic is defined in L<MojoX::Routes>
+=over 4
+
+=item C<namespace>
+
+C<namespace> is the namespace to search for controllers
+
+=item C<controller_base_class>
+
+C<controller_base_class> is the base class used to identify
+controllers: objects without this class in their inheritance trees
+will not be accepted as valid controllers.
+
+=item C<hidden>
+
+C<hidden> is an array of methods and attributes that are hidden from
+the dispatcher and are not considered as valid candidates for actions.
+
+=back
+
+It has only two public methods, C<hide> as a helper to add to the
+C<hidden> attribute and C<dispatch>, the entry point to the
+dispatching process:
+
+    $dispatcher->dispatch($c);
+
+It has a number of internal methods implementing class and method
+generation and walking of the stack of routes as represented by
+L<Routes::Match>, a Routes visitor class.
+
+It also implements embedded application detection and dispatching
+to/from embedded applications. See L<Embedding Applications> for more
+information.
+
+The actual routes semantic is defined in L<MojoX::Routes>, the base
+class of the routes dispatcher.
 
 XXX interface with explanations, and very interesting explanations these will be
 
@@ -1604,8 +1718,8 @@ XXX interface with explanations, and very interesting explanations these will be
 The controller, usually written as C<$c> in the examples, is the base
 class for most of the application code, since routes dispatcher
 dispatches requests to controller (an application class) and action
-(its method). So you should think of the controller more in these
-terms:
+(its method). So you should think of the controller more in the terms
+of the C<$self> object in your application's actions:
 
     warn "The argument for 'month' was " . $self->param('month');
     my $month  = $self->param('month');
@@ -1621,6 +1735,8 @@ Controller and Action
 
 =head3 Renderer, Handlers, Helpers, Templating engines
 
+=begin consideration
+
 <ask_> <%= $self->render_partial('_common/code'); %> -- shouldn't the result of the _common/code template be html escaped?
 <sri> ask_: nope, render results are a special case like in rails and django
 <sri> same for some .ep helpers
@@ -1632,7 +1748,7 @@ Controller and Action
 <ask_> cool, thanks.
 * sri makes a note to mention it in a guide
 
-
+=end consideration
 
 =head2 Mojolicious Application Interface
 
@@ -1745,7 +1861,7 @@ IRC (C<#mojo@irc.perl.org>) and using a Google groups mailing list
 (L<http://groups.google.com/group/mojolicious>).
 
 If you want to submit a patch, the best way to do it is to set up a
-repository on GitHub (forking is offered at the repostory-to-be-forked
+repository on GitHub (forking is offered at the repository-to-be-forked
 after you have logged in, more info at
 L<http://help.github.com/forking/>) and set it up to track the
 upstream. The set-up is different from what you would do if it was
@@ -1803,7 +1919,50 @@ you. There is plenty of documentation for new C<git> users with the
 package, on C<git> site at L<http://git-scm.com/> and at GitHub:
 L<http://help.github.com/>.
 
-=head3 Requirements for code submission
+=head2 Working With Parallel Versions
+
+When contributing to the framework, you will need to have different
+versions of the distribution accessible, either to compare or
+benchmark or to use a stable release for your own projects and
+applications while working on a new feature.
+
+You should be familiar with the possibilities, but to make things
+simple, let us review the options:
+
+You can run L<directly from the source tree> (assuming bash):
+
+   $ PERL5LIB=./lib:$PERL5LIB script/mojolicious <command>
+
+To make this permanent:
+
+   $ export PERL5LIB=`pwd`/lib:$PERL5LIB
+   $ export PATH=`pwd`/script:$PATH
+
+To make this sensible, you should use make to create C<blib> and then
+do:
+
+   $ WORKDIR=/path/to/repository/blib
+   $ export PERL5LIB=$WORKDIR/lib:$PERL5LIB
+   $ export PATH=$WORKDIR/script:$PATH
+
+You might still get issues due to the fact that both your development
+and the released versions are available in the search path. The only
+way to solve this problem is to have both installed in non-standard
+locations.
+
+A refresher:
+
+  $ mkdir ~/usr ~/devel
+  $ cd <distro_workdir>
+  $ perl Makefile.PL PREFIX=$HOME/usr
+  $ make test && make install
+  $ cd ../<devel_workdir>
+  $ perl Makefile.PL PREFIX=$HOME/devel
+  $ make test && make install
+  $ # writing interesting scripts to set up environment
+  $ # left as an exercice for the reader
+
+=head2 Requirements for code submission
 
 Please do not forget that Mojolicious is developed with an agile
 development model and much effort is invested into having as complete
@@ -1880,6 +2039,8 @@ more info.
 
 =head2 Content types
 
+=begin consideration
+
 static:  vti: you can always set content_type header by yourself
 
 (11:43:21 PM) vti: look at how i server static files in pastelicious
@@ -1890,8 +2051,9 @@ static:  vti: you can always set content_type header by yourself
 
 $res->headers->content_type('image/jpg');
 $self->render_text($binary_data);
-=> now actuall render_data!!
+ => now actually render_data!!
 
+=end consideration
 
 =head2 Source file and template encoding
 
@@ -1900,10 +2062,11 @@ C<UTF-8> by default.
 
 XXX No idea how to use it. A helper would be nice.
 
+=for consideration
 vti: renderer has ->encoding option
 
 For XXX templates in __DATA__ sections, the file encoding is in effect, so
-do not forget to use C<use utf8;> if you plan to use unicode in your templates.
+do not forget to use C<use utf8;> if you plan to use Unicode in your templates.
 
 =head2 Embedding Applications
 
@@ -1917,6 +2080,7 @@ do not forget to use C<use utf8;> if you plan to use unicode in your templates.
 
 =head2 WebSockets
 
+=for consideration
 Ie. rendering C<JSON> directly to a WebSocket:
 sri: well, you can already do $self->send_message($self->render_partial(...));
 
