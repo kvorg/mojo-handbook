@@ -344,13 +344,13 @@ renderer L<MojoX::Renderer> will be used and data will be passed to it
 using the stash.
 
 The renderer by default tries to use a template called C<<
-<controller>/<action> >>, so <<example/welcome> in this case. The file
-has two extensions: the first is the format of the result
-(ie. C<html>), and will be used to select the correct MIME-type, while
-the second is the format of the template (by default C<.ep>). The
-format extensions is processed by looking up a list of "handlers",
-usually provided by plugins, and by default including C<.txt>, C<.ep>,
-C<.epl>, C<.json> and C<.pod>.
+<controller>/<action> >>, so C<< <example/welcome> >> in this
+case. The file has two extensions: the first is the format of the
+result (ie. C<html>), and will be used to select the correct
+MIME-type, while the second is the format of the template (by default
+C<.ep>). The format extensions is processed by looking up a list of
+"handlers", usually provided by plugins, and by default including
+C<.txt>, C<.ep>, C<.epl>, C<.json> and C<.pod>.
 
 Most of the time, the layout is in the Mojoliciuos built-in C<.ep>
 format, which is small, fast and versatile, but fully described
@@ -360,19 +360,36 @@ that can provide additional services, such as translation.
 After the renderer is finished, the control is passed back to the HTTP
 stack and it serves the response to the client.
 
-XXXX mostly not done from here on, but there are some fuller sections
-to be found.
+Complicated? It looks much simpler when you are writing an
+application, since all of this complexity is abstracted away and
+safely kept behind defaults. All you need to do is set up your routes
+and write your controllers/actions, models and views (templates).
 
+=head1 MOJOLICIOUS AND MOJOLICIOUS LITE
+
+XXX perhaps a short anatomy of the files here
 
 =head1 DISPATCHING
 
-XXX This should contain user documentation on static and routes dispatching
+Dispatching is the process of mapping the HTTP request to a specific
+action an executing that action to satisfy the request. This can be
+achieved simply by finding and serving the correct file - what we call
+B<static dispatching> - or by finding and calling the correct method
+in the application.
 
-Intro here...
+In L<Mojolicious>, the two approaches are implemented as B<static> and
+B<routes dispatcher> and the framework in fact attempts a static
+dispatch for each request, only trying a routes dispatch if it cannot
+satisfy the reqeuest simply with a file.
 
 =head2 Dispatching Static Files
 
 C<MojoX::Dispatcher::Static>
+
+XXXX mostly not done from here on, but there are some fuller sections
+to be found.
+
+=begin consideration
 
 (03:38:40 PM) doubi: I have my mojolicious app in a subdirectory, but it keeps looking for static things like css and js under the top level site folder. How can I make it look in the subdir, where app is?
 (03:50:24 PM) sri: doubi: you can set $app->static->prefix
@@ -588,6 +605,28 @@ Mojolicious with Plugins> for more information.
 =head1 USING MOJO HTTP CLIENT
 
 =head1 MOJOLICIOUS IN PRODUCTION
+
+XXX Introductions
+
+=head2 Securing a stable environment
+
+When preparing a project for release into production, you should make
+sure it is stable and functional to avoid disappointing users and
+causing unnecessary mainteinance overhead.
+
+You should prepare a set of test to make sure the application is
+acutally working in it current environment as expected.
+
+To make sure the environment remains stable, you should install
+L<Mojolicious> directly in its working environment:
+
+  $ cd <mojolicious-source-distro>
+  $ perl Makefile.PL PREFIX=<app-deployment-dir>/lib
+  $ make test && make install
+
+The C<@INC> handling is now managed by the same mechanism that finds your application files.
+
+XXX check if this actually works order-wise
 
 B<XXX Kind souls will supplement this with advice on running
 effectively under different environments.>
@@ -1554,7 +1593,7 @@ The routes dispatcher merits its own section: L<Routes Dispatcher>
 B<Controller> is the web application developer side of the
 "controller" from the Model-View-Controller paradigm: it defines
 interfaces to access the transaction and support systems to connect to
-the view (rendering, in L<Mojolicious>). L<MojoX::Contoller> is
+the view (rendering, in L<Mojolicious>). L<MojoX::Controller> is
 actually an abstract base class for
 L<MojoX::Session::Cookie::Controller> (with cookie and session
 support) and L<MojoX::Dispatcher::Routes::Controller> to integrate
@@ -1592,9 +1631,48 @@ for examples in the context of a Mojolicous application):
      my $r = MojoX::Dispatcher::Routes->new;
      $r->route('/:controller/:action/:id')->to('example#welcome', id => 1);
 
-XXX interface with explanations, hopefully understanding of 'hiding'
+The task of the dispatcher itself is simply to find a combination of
+class and method in the application namespace to fulfill the
+requirements of the controller/action specification in the routes
+request. The route matching itself is peformed by its base class,
+L<MojoX::Routes>. The dispatcher has a simple interface. It defines
+three attributes:
 
-The actual routes semantic is defined in L<MojoX::Routes>
+=over4
+
+=item C<namespace>
+
+C<namespace> is the namespace to search for controllers
+
+=item C<controller_base_class>
+
+C<controller_base_class> is the base class used to identify
+controllers: objects without this class in their inheritance trees
+will not be accepted as valid controllers.
+
+=item C<hidden>
+
+C<hidden> is an array of methods and attributes that are hidden from
+the dispatcher and are not considered as valid candidates for actions.
+
+=back
+
+It has only two public methods, C<hide> as a helper to add to the
+C<hidden> attribute and C<dispatch>, the entry point to the
+dispatching process:
+
+    $dispatcher->dispatch($c);
+
+It has a number of internal methods implementing class and method
+generation and walking of the stack of routes as represented by
+L<Routes::Match>, a Routes visitor class.
+
+It also implements embedded application detection and dispatching
+to/from embedded applications. See L<Embedding Applications> for more
+information.
+
+The actual routes semantic is defined in L<MojoX::Routes>, the base
+class of the routes dispatcher.
 
 XXX interface with explanations, and very interesting explanations these will be
 
@@ -1604,8 +1682,8 @@ XXX interface with explanations, and very interesting explanations these will be
 The controller, usually written as C<$c> in the examples, is the base
 class for most of the application code, since routes dispatcher
 dispatches requests to controller (an application class) and action
-(its method). So you should think of the controller more in these
-terms:
+(its method). So you should think of the controller more in the terms
+of the C<$self> object in your application's actions:
 
     warn "The argument for 'month' was " . $self->param('month');
     my $month  = $self->param('month');
@@ -1745,7 +1823,7 @@ IRC (C<#mojo@irc.perl.org>) and using a Google groups mailing list
 (L<http://groups.google.com/group/mojolicious>).
 
 If you want to submit a patch, the best way to do it is to set up a
-repository on GitHub (forking is offered at the repostory-to-be-forked
+repository on GitHub (forking is offered at the repository-to-be-forked
 after you have logged in, more info at
 L<http://help.github.com/forking/>) and set it up to track the
 upstream. The set-up is different from what you would do if it was
