@@ -1919,7 +1919,50 @@ you. There is plenty of documentation for new C<git> users with the
 package, on C<git> site at L<http://git-scm.com/> and at GitHub:
 L<http://help.github.com/>.
 
-=head3 Requirements for code submission
+=head2 Working With Parallel Versions
+
+When contributing to the framework, you will need to have different
+versions of the distribution accessible, either to compare or
+benchmark or to use a stable release for your own projects and
+applications while working on a new feature.
+
+You should be familiar with the possibilities, but to make things
+simple, let us review the options:
+
+You can run L<directly from the source tree> (assuming bash):
+
+   $ PERL5LIB=./lib:$PERL5LIB script/mojolicious <command>
+
+To make this permanent:
+
+   $ export PERL5LIB=`pwd`/lib:$PERL5LIB
+   $ export PATH=`pwd`/script:$PATH
+
+To make this sensible, you should use make to create C<blib> and then
+do:
+
+   $ WORKDIR=/path/to/repository/blib
+   $ export PERL5LIB=$WORKDIR/lib:$PERL5LIB
+   $ export PATH=$WORKDIR/script:$PATH
+
+You might still get issues due to the fact that both your development
+and the released versions are available in the search path. The only
+way to solve this problem is to have both installed in non-standard
+locations.
+
+A refresher:
+
+  $ mkdir ~/usr ~/devel
+  $ cd <distro_workdir>
+  $ perl Makefile.PL PREFIX=$HOME/usr
+  $ make test && make install
+  $ cd ../<devel_workdir>
+  $ perl Makefile.PL PREFIX=$HOME/devel
+  $ make test && make install
+  $ # writing interesting scripts to set up environment
+  $ # left as an exercice for the reader
+
+=head2 Requirements for code submission
 
 Please do not forget that Mojolicious is developed with an agile
 development model and much effort is invested into having as complete
