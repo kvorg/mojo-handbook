@@ -65,45 +65,67 @@ B<action> (application method) using B<routes> and building responses
 with an advanced built-in B<templating system> (or any other
 templating system of your choice).
 
-=head1 INSTALLATION
+=head1 FIRST STEPS
+
+=head2 Installation
 
 You should install the Mojolicious framework and use the supplied
 documentation and commands to learn and experiment while reading this
 handbook. You can use the last release on CPAN:
 
- sudo cpanp install Mojolicious
+   $ sudo cpanp install Mojolicious
 
 If you want to use the latest version, however, installing from the
 source repository is better:
 
- git clone git://github.com/kraih/mojo.git
- cd mojo
- perl Makefile.PL
- make && make test && sudo make install
+   $ git clone git://github.com/kraih/mojo.git
+   $ cd mojo
+   $ perl Makefile.PL
+   $ make && make test && sudo make install
 
-=head1 FIRST RUN
+=head2 First Run
 
 You can try out the framework by modifying the example application
 provided by the C<generate> command. Simply type this on the command line:
 
-  $ mojolicious generate lite_app ml_test
-  $ ./mltest daemon --reload
-  $ <web-broser-of-choce> http://localhost:3000/
-  $ <edit code and reload page, server auto-reloads when you save chages>
+   $ mojolicious generate lite_app ml_test
+   $ ./mltest daemon --reload
+   $ <web-broser-of-choce> http://localhost:3000/
+   $ <edit code and reload page, server auto-reloads when you save chages>
 
 When you are ready to look at a full application, you can extract the
 components of the script with the C<inflate> command or start a new
 project with full-blown scaffolding and interace:
 
- $ ./mltest inflate
+   $ ./mltest inflate
 
 or
 
-   $ mojolicious generate app MyTest
-   $ cd MyTest
-   $ ./script/mytest daemon --reload
+    $ mojolicious generate app MyTest
+    $ cd MyTest
+    $ ./script/mytest daemon --reload
+
+=head2 Keeping Up To Date
+
+L<Mojolicious> is currently (2010) under rapid development, so you want to keep with the action and update your installation and your application.
+
+If you are using CPAN, this should update you to the last CPAN release:
+
+   $ sudo cpanp install Mojolicious
+
+If you installed from GitHub, this is a quick way to update:
+
+   $ cd <path-to>/mojo
+   $ git pull
+   $ make clean
+   $ perl Makefile.PL
+   $ make && make test && sudo make install
+
+(If you have deleted the clone of the repository, simply repeat the
+installation procedure.)
 
 Read ahead for more ...
+
 
 =head1 A NOTE ON DOCUMENTATION
 
