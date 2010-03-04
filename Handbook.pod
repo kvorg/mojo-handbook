@@ -28,12 +28,12 @@ and resource for L<Mojolicious::Guides> - Mojolicious Guide To The Galaxy.
 
 A MVC web framework provides application interfaces for web server and
 client interaction, content generation services and data models. Its
-design is centered on the concept of B<separation of concern>, making
+design is centered on the concept of B<separation of concerns>, making
 it easy to deal with the data, the logic and the presentation
 separately instead of mixing data, code and web page bits into an
 indigestible soup.
 
-To summarize the mission of L<Mojolicious> a as modern perl MVC web
+To summarize the mission of L<Mojolicious> as a modern perl MVC web
 framework, it is best to start with a quote from Sebastiean Riedel,
 the author of Mojo and Mojolicious:
 
@@ -50,7 +50,7 @@ L<Mojolicious> is not only a fast and light alternative but
 full-featured web MVC frameworks, it offers a "lite" mode that makes
 developing web tools and replacing existing CGI scripts a breeze.
 
-Its is as simple (or simpler) to deploy as C<CGI.pm> and has no
+It is as simple (or simpler) to deploy as C<CGI.pm> and has no
 out-of-perl-core dependencies but can use certain features provided by
 add-on modules from CPAN if they are install. It also offers
 B<scaffolding> (generation of application files from templates) to
