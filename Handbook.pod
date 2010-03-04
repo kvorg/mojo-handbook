@@ -168,7 +168,7 @@ L<http://www.mojolicious.org/> and Sebastian Riedel's site at
 L<http://labs.kraih.com/>.
 
 There are also presentation slides in English by Anatoly Sharifulin
-L<http://www.slideshare.net/sharifulin/mojo-en>.
+L<http://www.slideshare.net/sharifulin/mojolicious-the-web-in-a-box>.
 
 
 =item *
