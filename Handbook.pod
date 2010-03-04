@@ -1674,7 +1674,7 @@ request. The route matching itself is peformed by its base class,
 L<MojoX::Routes>. The dispatcher has a simple interface. It defines
 three attributes:
 
-=over4
+=over 4
 
 =item C<namespace>
 
