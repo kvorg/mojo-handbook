@@ -14,6 +14,8 @@ use utf8;
 # * lib/Mojo/Message.pm: $message    = $message->default_charset('UTF-8');
 #   Default charset used for form data parsing.
 #  How do we use this?
+# add http://d.hatena.ne.jp/yukikimoto/20100220/1266588242
+# credit to su-bzero
 
 =head1 NAME
 
@@ -518,6 +520,21 @@ render_text() for binary data
 =head2 Templates in Mojolicious
 
 =begin consideration
+
+(01:50:51 AM) stephen: Hello all-- today on "Stephen doesn't get it", if I add_helper( 'foo' => sub { #whatever }) and load the plugin, can I then do <%= foo %> in an epl template?
+(02:12:14 AM) sri: stephen: not epl, just ep
+(02:21:13 AM) stephen: sri: OK, so in epl I have to look up the helper and call it?
+(02:21:18 AM) sri: maybe we shouldn't report them, but i hate to ignore events
+(02:21:28 AM) sri: stephen: yes
+(02:21:34 AM) sri: stephen: why not use ep?
+(02:22:11 AM) stephen: sri: I'll try ep. For some reason I started out doing all my templates in epl.
+(02:22:40 AM) sri: ep is really way better
+(02:27:44 AM) stephen: Where's the best place to learn about ep?
+(02:28:57 AM) sri: just the tutorial i think
+(02:29:25 AM) sri: it's not hard, there are helpers, stash vars get initialized as $foo and the like and $self is already initialized
+(02:29:29 AM) sri: thats it basically
+(02:29:34 AM) stephen: OK
+(02:29:50 AM) sri: and auto escaping is on
 
 (11:40:07 AM) rindolf: Hi all. <%= $register_form %> HTML-escapes the string. How can I insert a raw string without escaping?
 (11:40:51 AM) yko left the room (quit: ).
@@ -2022,6 +2039,14 @@ See L<Mojolicious::Plugin> for reference. Plugins shipped with
 Mojolicious have a number of advanced examples.
 
 
+=begin considering
+
+<marcus> hrm, might be a problem with the template options
+<marcus> sri: plugins can't take options right?
+<marcus> I guess they can
+
+=end considering
+
 =head1 COOKBOOK
 
 Most of the following subsections should eventually find their proper
@@ -2245,6 +2270,195 @@ http://oslopm.blip.tv/file/1903160/
 (10:03:53 PM) sri: and write docs in between ;p
 (10:04:31 PM) sri: rindolf: the mojo client has a post_form method that does most of the work
 (10:05:09 PM) sri: there are many many tests using it, espcially for newer encoding checks
+
+CouchDB link and syn/async info:
+<esskar> vti, sri http://showmetheco.de/5e02cf4d8d52f4086e400106808b94beb4a87158 check the example (and sub revisions in MojoX::CouchDB::Doc) at the end; this is what i meant about the async behaviour
+* garfield has quit (Ping timeout: 360 seconds)
+* garfield (~garfield@84-74-63-71.dclient.hispeed.ch) has joined #mojo
+<sri> esskar: you need a second callback to make it async
+<esskar> where?
+<sri> ->revisions(sub {...});
+<sri> otherwise it only works blocking
+<esskar> how do i siwtch to blocking?
+<esskar> i do not want async :)
+<sri> you use your own ioloop instance
+<sri> and not the singleton
+<sri> Mojo::Client->new(ioloop => Mojo::IOLoop->new)
+<sri> that should make it blocking to the outside
+<sri> for your client attribute
+<sri> you can't be half async though
+<sri> all or nothing :)
+<sri> alternatively you could use two client instances
+<sri> one for async and one for sync ;p
+<esskar> is set __PACKAGE__->attr(is_async => 0); now
+<esskar> used the new client code above
+<esskar> but it sub revisions returns before the inner callback has finished
+<sri> but is_async does nothing
+<esskar> anyways :)
+<esskar> and i do not see how i change that behavior
+<sri> esskar: you should just add a second callback and be done with sync and async
+<esskar> as much as i am a fun of asynchronous calls it is not the behaviour that i want here ...
+* esskar falls back to LWP::Request
+<sri> esskar: Oo
+<sri> just make your client instance sync
+<sri> esskar: __PACKAGE__->attr(client => sub {Mojo::Client->new(ioloop => Mojo::IOLoop->new)});
+<sri> that client will block whenever you call process
+<esskar> sri: nope
+<sri> then you are registering new requests inside a callback on the same client instance
+<sri> just use a new client instance
+<esskar> let me see
+<sri> my $client = Mojo::Client->new(ioloop => Mojo::IOLoop->new;
+<sri> );
+<sri> if you want to block inside a blocking request you of course need a new blocking client ;p
+<sri> thats what i meant when i said using two clients before
+<esskar> sri++
+<esskar> thanks
+<sri> one could be async and one sync... possibilities are infinite :)
+* esskar raises up to Mojo::Client
+<sri> i've been thinking about just adding a ->blocking method to Mojo::Client
+<sri> but i'm afraid it will encourage people to mix sync and async without understanding the basics
+<sri> you can only turn the whole client instance into sync mode
+<sri> not individual requests
+<esskar> i see
+<sri> multiple requests will run parallel even in a blocking client
+<sri> thats why you just had a problem
+<sri> oh, i think i could implement ->blocking in a sane way by checking if we already have running requests in queue
+<esskar> sri: http://showmetheco.de/50cffb9a5804bd407f894ce13806e194d19c816b much better now, thanks
+<sri> oooh, we could do $client->new_blocking
+<sri> they could share cookiejar and stuff
+<esskar> sounds nice
+<sri> my $c2 = $c1->new_blocking
+* sri nods
+<sri> thats good
+<sri> that leaves all instance specific data untouched
+<sri> maybe $client->clone_blocking would be more appropriate
+<esskar> $client->clone(blocking => 1)
+<vti> esskar: you read my mind?!
+<sri> $client->blocking_client;
+<sri> clone has generally a special meaning
+<esskar> adding words behind keywords doesn't look good
+<sri> $client->sync_client;
+<esskar> yes, but then you could have $blockingclient->clone(blocking => 0)
+<sri> esskar: that would do nothing
+<esskar> why not?
+<sri> what would it do?
+<sri> and why? :)
+<esskar> returns a new async client
+<esskar> why? because!
+<sri> i never add features just because i can ;p
+<esskar> you should :)
+<esskar> maybe you do not see it now, but you may in the future
+<sri> do one thing and do it well
+<sri> my $c2 = $c1->blocking;
+<sri> that looks good in code
+<sri> $c1->blocking->get(...)->process;
+<sri> no negative side effects
+<sri> and you don't really have to think about using a second client instance
+<sri> the second instance will just vanish when it's done
+* sri likes
+<sri> thats actually really nice
+* sri wonders if it would be a better idea to make Mojo::Client blocking by default and add $client->async->get(...)->process
+<sri> it shouldn't break anything
+<vti> yes, blocking by default is a good idea
+<sri> that removes the default need for pause/resume in mojolicious
+* sri nods
+<sri> people shouldn't have to care about it by default
+<sri> it's advanced
+<sri> the mojolicious client would become dead simple to use
+<sri> ohoh one problem though
+<sri> requests registered inside a callback
+<sri> process would have to become a little bit smarter i guess
+<sri> think i can make nested ->request calls blocking too :)
+<sri> umm... nested ->process
+<sri> async in the future will look something like $self->pause; $self->client->async->get('http://mojolicious.org' => sub { $self->finish });
+<sri> and sync just $self->client->get('http://mojolicious.org' => sub {...});
+<sri> the current hybrid thingy will result in sync
+<sri> very userfriendly
+<vti> why not just return $tx in sync mode without a callback?
+<sri> ?
+<sri> you can still make multiple parallel requests
+<vti> ah
+<sri> it will just block until all are done
+<sri> ops
+<sri> forgot ->process
+<sri> in my examples
+<sri> it's still there
+<sri> i wonder how my $tx = $self->client->get('http://mojolicious.org'); could be realized
+<sri> i might be able to do it
+<sri> lets see
+<sri> yay, sync/async client working :)
+<sri> even have a double proxy example working to compare performance
+<sri> wow
+<sri> async proxy is exactly 6.5 times faster :)
+<sri> lets see if we can get "my $tx = $client->get('http://mojolicious.org');" to work now
+
+AND sync/async explained
+<sri> you need to call ->pause before calling client then later call ->finish in the callback, and render explicitly inside the callback
+<sri> basically...do everything inside the callback
+<marcus> so finish does not continue where you've paused?
+<sri> doesn't work that way
+<sri> you can't pause in place
+<sri> if you were passing control back to the event loop from inside your action it would end up in a deep recursion
+<sri> sadly
+<marcus> yeah, that is sad
+<sri> there is no easier way afaik :/
+<sri> welcome to the wonderful world of event loops!
+<marcus> when using other parallel clients you usually block in the process call
+<marcus> guess I can do that by using a diff. ioloop
+<sri> yes, it blocks the server though
+<sri> unless you do prefork with one process per client connection
+<marcus> sure
+<marcus> well, waiting for dbi data blocks the server too
+<sri> ye
+<vti> anyevent adapter for mojo would be nice... you get all good stuff like async dbi, dns etc ;)
+<sri> well, gimme an hour and you can block your server with parallel requests out of the box ;p
+<sri> vti: feel free
+<marcus>     $self->client->ioloop(Mojo::IOLoop->new);
+<sri> ye
+<marcus> in startup made stuff work the way I wanted
+<marcus> I can still do multiple process calls?
+<sri> you can
+<marcus> good enough for now then
+<sri> vti: async dbi would still suck though ;p
+<vti> sri: ye, dbi sucks anyway! long live nosql!
+<marcus> freebeer
+<marcus> I quite like couchdb
+
+<esskar> are you planning MojoX::CouchDB yourself?
+<esskar> sri, if not (and if vti agrees), i may release it later on
+<esskar> are what namespace should be used for Mojo stuff that is not diretly part of Mojo?
+<sri> actually i did plan a MojoX::CouchDB
+<sri> but there is a lot of stuff higher on my todo list
+<sri> so just go ahead and release
+<marcus> vti: did you say you have a nice couchdb model?
+<vti> marcus: esskar is implementing one
+<marcus> k
+<marcus> Guess I'll be needing a lot of parallel requests for this project :)
+* ferreira is now known as ferreira|away
+<marcus> esskar: how far have you gotten with that?
+
+<sri> since version 14 it just add new cookies
+<sri> *adds
+<vti> ye, that's it
+<vti> i haven't checked mojox-session since then oO
+<sri> Oo
+<vti> and i see that there is way to delete a cookie
+<vti> *no way
+<sri> they get directly turned into headers ye
+<sri> i guess cookie header creation could be delayed until fix_headers... but that would require many many new tests :)
+<vti> no, no
+<vti> that's ok
+<sri> then again, deleting headers is of very limited use
+
+<vti> any suggestions how i can write an app that has a main server and many workers and server passes some info to idle workers, and then workers tell server when they are ready for more info?
+<vti> that's just a general perl question... but you are smart :)
+<sri> thats basic prefork stuff, just multiplex pipes in the parent process
+<vti> ye, but should i open a pipe for every worker?
+<sri> ye
+<sri> good thing about pipes is that the first 512 bytes written are atomic
+<vti> oh, good to know
+<sri> makes packet handling easy
+<vti> thanks
 
 =end comments
 
