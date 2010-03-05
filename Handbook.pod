@@ -1931,6 +1931,11 @@ No you can fetch and merge upstream into your master simply by saying:
 
 To start a new patch, repeat the branching and check-out process above.
 
+Note: Needing to use a new branch for every commit-set is admittedly
+unusual, but upstream will likely squash and modify your commits before
+applying, so merging them back will be an non-trivial process, and
+your history will become unnecessarily complicated.
+
 C<git> will take care of efficiency and facilitate the process for
 you. There is plenty of documentation for new C<git> users with the
 package, on C<git> site at L<http://git-scm.com/> and at GitHub:
