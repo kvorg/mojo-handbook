@@ -231,6 +231,12 @@ C<vti>'s blog: L<http://vti.showmetheco.de/>
 A simple nopaste service build as a C<Mojolicious::Lite> application:
 L<http://showmetheco.de/>
 
+=item v6test
+
+A IPv6 stack testing application with a NoSQL back-end (quite
+heavy-weight, using KiokuDB, an object-graph store engine built on
+Moose, to access mongoDB): L<http://www.v6test.develooper.com/couch>
+
 =back
 
 =back
@@ -569,6 +575,15 @@ render_text() for binary data
 sessions and performance: avoiding model access (DB or file) on every
 page read by using memcache ... http://www.youtube.com/watch?v=i6Fr65PFqfk - signed
 cookies and crucial data in the cookie and you are done
+
+<und3f> How to clean session?
+<und3f> Witch one build on signed cookies 
+<und3f> $self->session 
+<xantus> $self->stash->{session} = {};
+<xantus> or better, $self->stash( session => {} );
+<und3f> thanks 
+<sri> expires => 1 should work too
+<und3f> yesterday i tries expires => 0 :P
 
 =end consideration
 
@@ -2061,6 +2076,23 @@ progress, and some will remain as useful tips.
 See L<Mojolicious::Guides::FAQ> and L<Mojolicious::Guides::Cookbook> for
 more info.
 
+=head2 Log Files and Debugging
+
+=begin consideration
+
+(06:11:42 AM) sri: development mode with debug log level is the default
+(06:12:00 AM) tempire: Yeah, I see that now.  I was just mixed up since this is the first time I've used app instead of lite_app
+(06:12:18 AM) sri: :)
+(06:12:47 AM) sri: ah, didn't read backlog that far
+(06:13:01 AM) su-bzero [~komslavik@mcc-dyn-241-148.kosnet.ru] entered the room.
+(06:15:10 AM) sri: tempire: you can delete the log directory to make it log to stderr btw
+(06:15:19 AM) tempire: excellent
+(06:15:25 AM) tempire: thanks
+(06:41:50 AM) marcus: that's a handy piece of advice
+(06:41:55 AM) marcus: is it in docs anywhere? :)
+
+=end consideration
+
 =head2 Content-type and C<MIME>
 
 =head2 Language support
@@ -2464,6 +2496,13 @@ AND sync/async explained
 <vti> oh, good to know
 <sri> makes packet handling easy
 <vti> thanks
+
+(10:43:27 PM) mvuets: I like trailing slash, like site.com/stuff/ Is it hard to ask Mojolicious to use them?
+(10:44:22 PM) sri: mvuets: routes don't use them, but we try to preserve the information in the url object
+(10:44:44 PM) sri: you could build a condition checking it i guess
+(10:45:08 PM) sri: ->req->url->path->trailing_slash
+(10:45:55 PM) sri: i've thought about adding slash support to the routes implementation, but so far i've not found a good syntax
+(10:47:37 PM) mvuets: Nice. Thanks
 
 =end comments
 
