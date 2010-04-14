@@ -825,6 +825,26 @@ http://getbootylicious.org/articles/2009/09/apache-fastcgi.html
 (12:16:11 AM) sri: try the tutorial and see how far you get
 (12:16:18 AM) sri: perldoc Mojolicious::Lite
 
+(12:32:17 AM) marcus: sri: can I use Mojolicious with FCGI::Engine?
+(12:37:27 AM) sri: marcus: you might just be able to use plackup with psgi auto detection :)
+(12:38:01 AM) marcus: is that a good way to deploy apps?
+(12:38:39 AM) sri: sure, why shouldn't it?
+(12:39:03 AM) sri: it's pretty much equal to cgi and fastcgi
+(12:39:07 AM) marcus: dunno, did you test it?
+(12:39:32 AM) sri: i'm only testing for psgi spec compliance
+(12:39:37 AM) sri: not plack
+(12:39:43 AM) sri: no idea how good it is
+(12:39:53 AM) sri: but if it breaks it's not my problem :D
+(12:40:21 AM) marcus: well, it would be my problem
+(12:40:28 AM) marcus: which is why I'm asking now
+(12:41:00 AM) sri: don't think anyone has experience with fcgi engine and mojolicious
+(12:41:19 AM) marcus: I use fcgi engine with iusethis
+(12:41:29 AM) marcus: it's pretty cool
+(12:42:21 AM) sri: don't even know how it works so i'm just guessing
+(12:42:45 AM) marcus: it controls standalone fcgi serves
+(12:42:47 AM) marcus: servers
+(12:42:53 AM) sri: if it's psgi compliant it should be worth a shot
+
 =end comments
 
 =head1 COMPONENTS OF MOJOLICIOUS
@@ -2503,6 +2523,198 @@ AND sync/async explained
 (10:45:08 PM) sri: ->req->url->path->trailing_slash
 (10:45:55 PM) sri: i've thought about adding slash support to the routes implementation, but so far i've not found a good syntax
 (10:47:37 PM) mvuets: Nice. Thanks
+
+(12:25:12 AM) mvuets: Why <%= things %> are evaluated in a list context?
+(12:25:55 AM) sri: possibly the way it's compiled
+(12:26:06 AM) sri: $_M .= things;
+(12:26:55 AM) mvuets: Concatination is scalar.
+(12:27:17 AM) sri: just telling you what it gets compiled to, no idea what things is
+
+<tempire> Does mojo have a built-in way to access the #hash at the end of a url?
+<sri> thats client side
+<sri> it doesn't get sent to the server
+<sri> it's called the fragment
+
+<tempire> I presume the best way to handle initial processing for all requests would be a bridge, say to a sub in Root.pm
+* sri nods
+
+<tempire> I presume the charset plugin is for putting charsets in the content-type header of each response
+<tempire> Of which the correct usage would be: __PACKAGE__->plugin( charset => { charset => "utf-8" } ); in MyApp.pm
+<sri> tempire: the plugin does more than that
+<sri> charset handling is very complicated
+<sri> for example browsers won't set a charset when submitting forms and just use the charset the form page was sent in, so it is impossible to detect on the server side and the plugin sets a default
+* arthas has quit (Quit: Lost terminal)
+<sri> so just pick a charset, use the plugin to set everything up, enjoy everything just working
+
+<thenduks> hello groovy people, loving mojo, need to ask though since I can't find it in the docs (some broken links around?) - how/where do I setup some constants I need throughout my app (say, $IMAGE_DIR) so they can be accessed in controllers/etc?
+<sri> you could use the json config plugin
+<sri> it will read a json config file on startup and put the contents into the stash as "config" for every request
+<sri> quite convenient
+<thenduks> ah ha I saw something about 'stash'
+<thenduks> but can't find the actual docs for it
+<sri> Mojolicious::Lite contains a good tutorial
+<thenduks> Yea that's actually my general problem, I started with a Lite app, but now I'm moving to a regular one and basically all the stuff at the top I have no idea where to put
+<sri> i see
+<thenduks> so I have code to make sure $IMAGE_DIR exists and so on
+<thenduks> i also have code like app->secret('...')
+<sri> that would all go to the startup method in MyApp
+<thenduks> but 'app' doesn't seem to mean anything in my main app module
+<thenduks> right that's where I'm trying to put it
+<sri> sub startup { my $self = shift; $self->secret(...) }
+<thenduks> so I figure shift->secret('...') and so on
+<thenduks> i got that part
+<thenduks> yea :)
+* sri nods
+<thenduks> so if I do $self->stash that should get me int he direction i need for 'global' stuff
+<sri> nope
+<sri> stash is request scope only
+<sri> what you want is to add attributes to MyApp
+<sri> the app instance can be accessed from controllers via $self->app
+<sri> the json config plugin uses special plugin hooks to initialize the stash
+<thenduks> ah i see
+<sri> you could overload "process" in myapp to do it yourself, but it's unneccessary
+<thenduks> where do I find this plugin?
+<sri> Mojolicious::Plugin::JsonConfig
+<sri> $self->plugin('json_config')
+<sri> t/mojolicious/ contains multiple test apps using it
+<thenduks> ok
+<thenduks> well, in my lite app I had: my $IMAGE_DIR = app->static->root . '/images';
+<thenduks> clearly I can't put that in myapp.json
+<thenduks> the app->static->root part i mean
+<sri> actually you can :)
+<sri> <%= app->static->root %>
+<thenduks> ah excellent
+<sri> it's epl preprocessed
+<sri> with a helper named app
+<thenduks> i'm sure i will see that is the case when I read the JsonConfig docs :)
+<thenduks> ok well I think I've got enough to keep going now
+<thenduks> thanks a lot
+<thenduks> hey sri: one last question if you're still around
+<thenduks> if stash is only available during a request then how would I use what I put in my json configuration and do some initialization based on it (say, making sure the directory exists, etc)?
+<sri> $config = $self->plugin('json_config');
+<sri> ;)
+<sri> check it on startup
+<thenduks> ohh i thought it was saying it populates stash ('period')
+<thenduks> as in, it's always in stash after you load it
+<thenduks> but yea, i get it
+<thenduks> thanks
+<thenduks> :)
+<sri> it will be in the stash, but it does more than that :)
+<sri> like i said, it's very convenient
+<thenduks> very convenient indeed
+<sri> the returned hash is a reference to the actual hash that goes into the stash btw. so you can even change values
+<sri> theoretically you could also run your checks inside the json config file since it's a epl template ;p
+<sri> but that wouldn't be as clean
+<thenduks> yea i'd rather not do that
+<thenduks> but your other point is interesting, that means you can put stuff that isn't json at all in there
+<thenduks> in the initialization of the app
+<thenduks> right?
+<sri> right
+<thenduks> i mean, the json is only for the initial load
+<sri> actually you could entirely skip the json file if you set defaults when loading the plugin
+<sri> plugin json_config => {default => {foo => 'bar'}};
+<sri> you'll only get a debug log message, and thats it
+<thenduks> right, i could populate it all in startup
+<sri> and you would still have the option to just add a json config file later on without any additional work
+<thenduks> so would it be a bad idea to put a logger in there?
+<thenduks> $config->{'logger'} = Mojo::Log->new;
+<thenduks> i suppose there's an easier way to handle logging, but i mean, as an example
+<sri> thenduks: you could even build a configurable plugin loader, it's all up to you, what you want to be configurable ;)
+<sri> alternative loggers would most likely just be plugins
+<sri> don't try to solve problems you don't have :)
+
+<tempire> Does mojolicious provide a way to modify the mojolicious::controller class?  Say, if I wanted to add a ->model method to be accessible to all controllers without creating an intermediary subclass of m::c.  
+<tempire> I suspect you'll say that's a very catalyst-y way of thinking.
+<sri> app->controller_class('MyController::Lalalala');
+<tempire> So, in using, ->controller_class('MyController::Lalalala');, all controllers that have "use base 'Mojolicious::Controller'" will have access to methods in "MyController::Lalalala" ?
+<sri> tempire: nope, it will be the default cotroller class for all Mojolicious::Lite actions
+<sri> tempire: all controllers would still have to inherit from it
+<tempire> ah
+<tempire> that makes more sense
+<sri> automatically changing all base classes would be quite bad ;p
+<sri> tempire: usually for app wide models it makes mroe sense to keep their instances in MyApp.pm
+<sri> they can be accessed from controllers via $self->app->...
+<sri> controllers are per request only, so not persistent
+<tempire> That's what I was thinking, but I'm thinking in terms of database connections
+<tempire> Where I want to connect and disconnect on every request
+<tempire> Which, now that I say that, it makes sense to make a plugin
+
+<tempire> I'm using a bridge to execute a sub before all other actions; how do I do the opposite? As in, "sub request_has_ended" ?
+<sri> tempire: there is no routes way but a plugin hook
+<sri> or you could overload process in MyApp
+<sri> if it's for a model thingy again, making it a plugin might be a good idea
+<sri> tempire: Mojolicious::Plugin::RequestTimer shows how to do something before and after processing a request
+
+Writing files
+<doubi> Evening all. I want to persist some data for my app in a plain text file (for now). The module that first caught my eye was Asset::File, but I couldn't understand why it wouldn't create a new file. Looking at bootylicious, it looks like what I really want are the functions provided by Mojo::Command. Am I on the right track now? Does Asset::File just simplify some things about reading and writing data?
+<tempire> doubi: Mojo::Asset::File creates a file for me without a problem.  http://showmetheco.de/713a3ad1975a29a4b03cf82004b0043f5f2047a6
+
+  use Mojo::Asset::File; 
+  my $asset = Mojo::Asset::File->new(path => '/tmp/mojo.txt');
+  $asset->add_chunk('foo bar baz');
+  print $asset->slurp;
+
+<sri> The main job of Mojo::Asset::File is to take care of uploads and the like behind the scenes
+<sri> it's not a general purpose file api
+<sri> just use IO::File :)
+<sri> don't use Mojo::Asset
+<sri> it's for internal use, not a general purpose file api
+<doubi> Ah, ok. So if I want to work with files to save stuff from my app, should I be using ::Command? Or just whatever module off cpan?
+<sri> not command
+<sri> IO::File or whatever
+<sri> we don't have a general purpose file api in mojo
+
+<xantus[]> I'm updating the websocket examples
+<xantus[]> with a jabber client!
+<sri> Oo
+<xantus[]> Should I just do the irc client first
+<xantus[]> that wouldn't require a user/pass
+<xantus[]> yeah
+<esskar_> sri: what env var do i have to set to see what mojo::client sends?
+<esskar_> i'd like to see the actually requests
+<xantus[]> I usuall use ngrep
+* sri uses ngrep too
+<xantus[]> sudo ngrep -W byline port 80    (for outgoing)
+<xantus[]> you might want to also specify host
+ http://github.com/xantus/mojo-websocket-examples/blob/master/script/websocket-irc-example-1
+<sri> wow, cool idea
+<sri> reusing mojolicious as a websocket to socket gateway
+<xantus[]> sri: maybe you can help me figure out why error_cb isn't called on disconnect
+<sri> hup_cb?
+<xantus[]> oooh :)
+<xantus[]> lol
+<sri> so far i thought protocols like irc would be handled server side, but this makes so much sense
+<sri> you get authentication and then keep all load off the servers
+<xantus[]> http://xant.us/ext-ux/lib/Sprocket/Filter/IRC.js
+<xantus[]> http://xant.us/ext-ux/lib/Sprocket/Filter.js
+<xantus[]> POE data filters ported to js
+<sri> :o
+<xantus[]> here are the rest http://xant.us/ext-ux/lib/Sprocket/Filter/
+<xantus[]> its stackable
+<xantus[]> put a line filter and a json filter together: lines of json in, objects out
+<xantus[]> objects in, lines of json out
+<xantus[]> I used it with sprocket socket
+<xantus[]> the long polling socket proxy
+<sri> aww...you used app->start
+<sri> how conformist of you
+<sri> ;p
+<sri> really beautyful though
+<sri> xantus[]: you totally need to blog that
+<sri> and i'll push you until you do :)
+<xantus[]> lol
+<xantus[]> its ugly
+<xantus[]> I should wrap it with ext in a window, and blog it
+<xantus[]> I still have my irc client in ext
+<sri> do it!
+
+ client_close()
+<sri> oh, those are state machine methods, DON'T TOUCH THEM!
+<sri> you call ->finish
+<yko> oops.
+<sri> that will do the right thing
+<yko> thx... btw, server_close == client_close for ws :p
+<sri> everything prefixed with server_ or client_ is dangerous
+
 
 =end comments
 
