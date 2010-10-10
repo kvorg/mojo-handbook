@@ -514,6 +514,19 @@ except more complicated things, such as models.
 
 Forget-me-not: stash, parameters
 
+=begin consideration
+
+14:59	maettu	some days you explained me where / how to find the parameters of a GET request. Now where are the parameters of a POST? :-S
+14:59	sri	$self->params
+15:04	sri	if you want only POST parameters use $self-req->body_params
+15:13	maettu	:-S
+15:19		ok, found it: $self->req->content->asset
+15:20		perhaps this helps you to understand what I meant.. :-)
+15:20	sri	so you want the actual message body unparsed
+15:20		$self->req->body will work too
+
+=end consideration
+
 C<< ->url_for() >> and C<< ->redirect_to() >>
 
 Details, gotchas
@@ -2142,6 +2155,13 @@ more info.
 
 =head2 Content-type and C<MIME>
 
+=begin consideration
+
+13:32	maettu	how can I manually set Content-Type to "application/javascript"?
+13:51	sri	maettu: $self->res->headers->content_type(...) or $self->render(..., format => 'js')
+
+=end consideration
+
 =head2 Language support
 
 =head2 Encodings
@@ -2742,8 +2762,653 @@ Writing files
 <yko> thx... btw, server_close == client_close for ws :p
 <sri> everything prefixed with server_ or client_ is dangerous
 
+(12:50:37 AM) vti: sri: ye, i am sure this can be somehow simplified:
 
+#!/usr/bin/perl
+
+use Mojo::Client;
+use Mojo::Transaction::HTTP;
+
+my $url     = shift @ARGV;
+my $handler = 'mpg123 -';
+
+open(HANDLER, "|$handler") or die "Cannot pipe input to $handler: $!\n";
+
+my $tx = Mojo::Transaction::HTTP->new;
+$tx->req->method('GET');
+$tx->req->url->parse($url);
+$tx->res->body(
+    sub {
+        my ($res, $chunk) = @_;
+        print HANDLER $chunk;
+    }
+);
+
+Mojo::Client->new->process($tx);
+
+close HANDLER;
+
+(12:51:59 AM) sri: my $tx = $client->build_tx(GET => $url); $tx->res->body(sub {...}); $client->process($tx);
+
+10:21	yko	and reusable template blocks also looks attractive
+10:24		As i understand, once defined content block would not be overriden by 'content "foo" => "bar"' , is it correct?
+10:25	sri	yes
+10:25		that way the first one defined wins, which makes inheritance work
+
+14:36	yko	$app->defaults! That what i need, but did not found before
+14:36		like $app->defaults(layout => 'main');
+14:41		garfield joined #mojo
+14:44	sri	it's new
+14:44		discovered i need it for the guide :)
+
+GitHub91	mojo: 07master 03Sebastian Riedel * 3c6e4e8 (9 files in 6 dirs): added finished callback support for HTTP transactions - http://bit.ly/deTDF3
+18:34	sri	btw. the finished callback can now be used to delay cleanup stuff until after the response has been sent to the user
+
+09:24	tab	where can i store a database schema handler create in the startup method to access it from controllers?
+09:25	dotan	tab: in your app, which is accessible from your controller as $self->app
+09:25		(the app is the class with the startup method)
+09:28	tab	ah thanks, it works
+
+13:18	tab	where should i define a helper sub to use in the ep-templates? e.g. for formatting currency values
+13:19	sri	tab: see rendering guide
+13:25	ysyrota	sri: is it possible to specify layout in inherited (extended) template?
+13:26	sri	ysyrota: yes
+13:27		extend and layout are almost the same
+13:27		i think i mention it in the rendering guide too
+13:28	ysyrota	sri: how? if I simply specify "% layout 'something'" in extended template, it doesn't work, but if I specify this in base template then it will work
+13:29	sri	ysyrota: umm, you mean extending template then
+13:29		thats not possible of course
+
+13:32	yko	another stupid question: how do i append something to url's path? path->append('foo/bar') does escaping... :(
+13:33	sri	yko: push the elements on ->parts
+13:33	yko	thx
+13:36		push (@{$url->path->parts}, @{Mojo::Path->new('foo/bar')->parts});
+13:36		ugh...
+13:37		well, actually $url->path->append( @{Mojo::Path->new('foo/bar')->parts} )
+13:38	sri	yko: why would you do that?
+13:38		wait...
+13:39		you have a url object!
+13:39	yko	shure
+13:39	sri	$url->path('foo/bar')
+13:39		the same ;p
+13:39		we now append relative paths
+
+20:14	sri	well, plugging any existing irc bot into mojo should be trivial
+20:15	sri	Mojo::IOLoop->singleton->tick_cb(sub {POE::Kernel->run_one_timeslice})
+
+die -> simply throws an exception, logging as an error.
+
+17:36	crab	what's the right place to open a database connection in a mojolicious app? i looked at mojo-paste and it opens a new one each time in sub process
+17:36		before calling ->dispatch. i could do that, but i'd like to reuse the handle if possible. so is there a better place?
+17:37	sri	app->defaults(db =>...)	(if you're using lite)
+17:37	will put the handle into the stash on every request, but instantiate it at startup
+17:38	crab 	i was using lite, but i'm switching to non-lite now
+17:38	sri	then it's $self->defaults(...) in your startup sub
+
+Using DB: if you're using something that preforks you'll be ok	http://github.com/yko/Mojolicious-Plugin-Db that plugin :p	 http://pastebin.com/iazBrG3J that's little init example and there's http://bit.ly/aE9Adk usage example
+        even better: just init connection to db in your startup { }	and then place it into defaults;	look in cometdesktop	http://github.com/xantus/comet[…]p/CometDesktop.pm
+        $self->default(db => $dbh);
+        also lots of juicy stuff in comet-desktop	like multiconfig plugin	and multiple static fallback	you can have overlaying paths
+        where one can take precedence over the other
+
+static binary files in <DATA>:	xantus: where's the code that does this static base64 thing?
+xantus:	just do the normal make and make install walk
+        you can create base64 blocks uing a program called recode
+        recode ../b64 <file.jpg >>myscript.pl
+        that'll append the base64 to the bottom, after you've added @@ file.jpg;base64
+
+to force logs to stderr:
+crab:    btw, how can i make ./foo daemon print logs to stdout with a mojolicious app the way it does with m::lite?	crab: log->path(undef)
+
+requst timeouts:
+MojoGuest497	how to set timeout on method get?
+
+07:01	marcus	MojoGuest497: I think you have to set connection_timeout on the Mojo::IOLoop object	$client->ioloop->connection_timeout()
+
+07:02	sri	$client->keep_alive_timeout is equal to that right now
 =end comments
+
+route gotchas:
+08:41	xantus__	I can't match / with /(*foo)
+08:44	so I have to add a / route :/
+
+08:49	sri	use a custom regex
+08:49	(*foo) is qr/(.+)/
+08:50	'/(*foo)', foo => qr/.*/
+08:52	not sure if thats counter intuitive
+09:08  	dynax60	get '/search/:cid' => [ cid => qr/\d+$/ ] => \&search => 'search';	for example :)
+
+ghithub stuff:
+18:19	tempire	What's the best way to update a previously forked repo on github?
+
+18:27	usually i do git pull --rebase origin master; git push -f own master	where own is my fork
+18:28	there was perfect article about forking on github
+
+18:28	tempire 	I just found one	git remote add upstream http://github.com/kraih/mojo.git, then git fetch upstream	log doesn't update, though.
+19:04	sri	tempire: you should rebase, merging makes it harder for me
+
+hmm:
+       $self->match->stack is neat?
+
+async:
+17:37	und3f	I am trying to build simple async app with mojo client wich must run async if Mojo server present and blocking otherwise. I got next code http://pastebin.ca/1913934 it works perfect with Mojo server, but if i run it from clean app it just load CPU and do nothing
+17:39	sri:
+(kvorg:	should really really testa and uderstand this - from  t/mojo/client.t :)
+
+package TestTest;
+ 
+use strict;
+use warnings;
+ 
+use base 'Mojo::Base';
+ 
+use Mojo::Client;
+use Mojo::IOLoop;
+ 
+sub request {
+    my ($self) = @_;
+ 
+    my $client = Mojo::Client->singleton;
+    my $stop_server = ! Mojo::IOLoop->singleton->is_running;
+    $client->async->get(
+        'http://google.com/',
+        sub {
+            my ($self, $tx) = @_;
+            print "Got google!\n";
+            $client->async->get(
+                'http://localhost:8080',
+                sub {
+                    my ($self, $tx) = @_;
+                    warn $tx->res->body;
+                    $client->async->ioloop->stop if $stop_server;
+            })->process,
+    })->process;
+    $client->async->ioloop->start;
+    print "here\n";
+}
+1;
+
+14:12	tom	question: if I have a callback in $client->get($url,$cb); And I need to do other get requests inside the callback, is it best do create a new client instance or reuse the existing $client ?
+14:12	sri	tom: do you want to process those requests blocking?
+14:13	tom	the once inside the $client callback yes
+14:13	sri	just reuse the client, it will clone a new one automatically
+14:14	tom	so it doesn mather that the existing client is async? if it clones a new one it become sync/blocking.
+14:14	sri	oh
+14:14		that does matter
+14:15		then you need a new one
+
+How to execute as a CGI script (... add others):	PATH_INFO=/foo ./myapp.pl
+
+perl -MMojo::URL -le'my $u=Mojo::URL->new("http://localhost:3000");$u->query->param(foo=>[qw/bar baz/]); print $u;
+
+08:25	dynax60	guys, how to make json-request on remote server? have you some sample?	on remote server side I must get it by:
+my $request = $self->req->json || return $self->render_json( { 'status' => 'Request error' } );
+08:28	sri	then it's wrong	sri	$client->post("http://80.76.224.24:3000/arping", {'Content-Type' => 'application/json'}, $json);	perl -MMojo::Client -e 'Mojo::Client->new->post("http://80.76.224.24:3000/arping", {"Content-Type" => "application/json"}, $json);'
+08:34	dynax60	and as a result I will have smth in $self->req->json on server side, right?
+08:34	sri	are you still using post_from instead of post?	thats where the error is coming from	post_form is really just for urlencoded and multipart/form-data	as in submitted html forms
+
+using Template Toolkit instead of ep:
+
+06:07   geekus	I'm trying to convert a set of EPL templates to TT
+06:08	I have things like $self->{stash}->{foo} and $self->req->params('xyz') in my EPL
+06:08	I'm not too familiar with TT... if I don't modify the controller at all, how can I get at these same things in TT with Mojo
+06:09	will self be passed into the TT for vars?
+06:09		so do I say self.stash.foo
+06:15		CPAN page for MojoX::Renderer::TT says "Template parameter are taken from  $c-stash >." but that's a typo
+06:15   	are there examples anywhere using TT templates?
+06:20	sri	[% c.stash %] i guess
+06:22	geekus	but what is "c"
+06:22		is $c the $self
+06:32	geekus	yes c.req.param('foo') works and so does c.stash.foo
+06:39	geekus	and in a layout you think I just do [% c.render_inner %]
+06:40	sri	with the latest cpan version you might also be able to use helpers like [% h.content %]
+
+working with mojo server daemons:
+
+08:13	dynax60	sri, what to do if we need the build-in web-server to make it daemonized
+08:15	sri	daemonizing is not portable, so daemon can't support it
+08:15		daemon_prefork is unix specific, so it can
+08:16		daemon is supposed to be able to run everywhere perl can :)
+08:25		daemon_prefork is pretty much always better for deployment
+08:26		it scales with cpus, and workers get restarted after 1000 requests
+08:26		and and and :)
+08:26		with --clients 10 you can also make workers go async
+08:27		giving you a pool for normal async daemons
+08:28	vti	async async!
+
+stash modification from one template to another (including, layouts):
+
+08:37	esskar	moin
+
+finishing with requests or going async:
+02:46	tempire	that's true.  I'm just bitter because I had to sit and figure out what was going on.
+02:46	sri	you can also just use render
+02:47		$self->render(data => '', status => 403) or so
+02:47		thats imo the correct way to handle it
+02:49		we now simply assume that people signal that they are done by calling ->rendered, ->render, redirect_to...or any of the other response generators
+02:51		btw. if the check passes i don't think you should do anything besides returning true
+02:52		200 will be take care of by the renderer
+03:00		btw. the most important async case for me is client requests
+03:00		http://github.com/kraih/mojo/b[…]s/lite_app.t#L364
+03:01		this is where the new design shines
+03:01		you can just fire off async client requests and render later in the callback
+03:02		it will just work
+03:03	tempire	Still within the timeframe of the original request, though, right?
+03:04	sri	no response gets sent before it is rendered
+03:04		it just waits and handles other requests in the meantime
+03:05	tempire	ah, so that process isn't locked
+03:05	sri	ye
+03:06	sri	it makes latency not matter much
+03:07		especially if you're querying couchdb for example
+03:09		and if the environment doesn't support non blocking (like CGI) it will simply fallback to blocking
+
+include in ep:
+08:37 esskar	about the include feature in ep:
+08:37		when I set a variable inside the included template
+08:37		it is not set outside the template
+08:47	esskar	i put $self->stash(picture => undef)
+08:48	sri	you can set the stash value though
+09:01	esskar	sri: is <%= include 'foo', picture => \$picture %>" working?
+09:01	sri	sure
+09:02		picture will be localized though and not available outside
+08:47		then i set $picture inside the included template
+
+09:28	ysyrota	sri: I get error Mojolicious::Plugin::EplRenderer:70 [9797]: Template error in "m0.html.ep": Route "
+" used in url_for does not exist
+09:35	ysyrota	sri: the templates contains only one string: <% content 'm0' => url_for %>
+09:35	sri	where is the ;?
+09:36		that will get compiled to something unpredictable
+09:36		url_for;
+
+lesser known helpers:
+<% app->mode %> to get at app
+
+DB handles 2010-08-15:
+18:51	crab	sri/yko: i know i've discussed this before, but opening db handles in startup() as suggested seems to not be the right thing to do
+18:52	sri	crab: why not?
+18:52	crab	because it creates one dbh before forking and all the children share it.
+18:52	sri	$self->defaults(db => $handle);
+18:52		ah
+18:53		right, that would require lazy loading
+18:53	sri	like an attribute on the app class
+18:54		__PACKAGE__->attr(db => sub {...}); ... my $db = $self->app->db;
+18:54	crab	where are attrbutes documented, or alternatively is there some example i can look at?
+18:54		ah, perfect.
+18:54	sri	normal perl oo
+18:55	alternatively you could use a plugin hook
+18:56		app->plugins->add_hook(before_dispatch => sub { $_[1]->stash->{db} = $handle });
+18:56	crab	i think the attr works for me, once the sub returns a value it's cached for me and returned, right?
+18:56	sri	right
+18:56	crab	perfect
+18:57	sri	it's an interesting problem though, maybe there's a way for us to handle it better
+18:57	vti	or use dbix::connector
+19:00	sri	oh, dbix::connector is a good idea
+19:00		crab: just do startup and dbix::connector
+19:01		seems way more elegant
+19:03		automatic fork handling
+08:15	marcus	omega: in startup, you can typically do stuff like $self->defaults( model => MyModel->new(..) );
+08:16		omega: and $self->stash->{model} will be available in every request.
+
+09:38	crab	what happens if i say <%= content 'blah' %> and there is no blah defined
+09:39	yko	i don't remember if there's fixup for undef
+09:39		usually i just do <%== content('blah') || '' %>
+
+14:10	yko	how to bring Mojolicious logs to console? app->log->path(undef) ?
+14:11	sri	no log directory is enough
+14:22	sri	app->log->handle(\*STDERR) might work
+
+More JSON:
+16:38	maettu	I POST a JSON-Object to mojolicious by a qooxdoo application. I can see in the mojo-server-console that the request comes in, but how can I access the JSON object / where is it?
+16:39	sri	maettu: the json object is the body?
+16:39	maettu	dunno
+16:40	sri	do you want it encoded or decoded?
+16:40	maettu	sri: decoded
+16:40	sri	my $object = $self->req->json
+16:40		that might just work
+16:43	maettu	sri: Use of uninitialized value $object in print at.. :-(
+16:44	sri	then it's likely more complicated, possibly urlencoded
+16:45		then you'll have to get the encoded json via ->param and decode it yourself with Mojo::JSON
+16:46	sri	you can print $self->req to get a picture of what you're dealing with
+16:46		yes, but thats a huge structure to dump
+16:47		content type would be a good hint i guess
+
+ ssl:
+19:59	vti	maettu: for debian/ubuntu libio-socket-ssl-perl is enough, it will download needable packages
+
+Serving static files:
+20:56		ahhh, me again: how can I ask Mojolicious to serve file "../source/Application.js" on "/whatever"?
+20:58	yko	static files are supposed to be in 'public' actually
+20:59	xantus	app->static->serve( $self, $path ); # relative to public
+20:59		app->home->rel_dir( 'public' ); # setting public dir, relative to home
+20:59	sri	or just "ln -s" for specific files
+20:59	xantus	er no
+20:59	sri	(into public)
+20:59	xantus	thats fetching public path relative from home
+21:00	yko	or change  $c->app->static->root('your/source');
+21:00		$c->render_static($path);  and then change $c->app->static->root back :D
+21:00	xantus	app->static->root( '/whatever' );
+21:00	yko	*not sure if it works
+21:00	sri	or just throw all your stuff into public
+21:05	maettu	ehm, statically delivering a .js file shows the listing in the Browser..
+21:25	maettu	ok, thanks, but it doesn't work
+21:25	sri	it's a relative path
+21:25		relative to your public directory
+21:26	yko	there's restriction that does'nt allows somebody to get ../../../../../etc/passwd or something like that i think
+21:26	maettu	Can't locate object method "app" via package
+21:27	yko	app? where do you call it? and on which object?
+21:28	maettu	on the object of the app itself
+21:29		I call it in script/[my_app].pm
+21:29		in sub startup{}
+21:31	yko	ohh... so. let me introduce you structure of Mojolicious internal objects
+21:31		controller has accessor app - that represents 'application' object
+21:31		so for access application in controller you need to call $c->app->something....
+21:32		if you are in startup { } you already have aplpication object- your $self
+21:32		so you should call $self->method instead of $self->app->method
+21:32		that is one more reason why i use $c/$app instead of $self in both cases.
+21:57	maettu	successfully served static pages outside public :-)
+
+understanding the traffic:
+ sudo ngrep -d eth0 host irclog.perlgeek.de and port 80
+
+custom headers:
+16:34	vti	hm... can i set custom headers when using get_ok? apparently not... hm
+16:34	sri	of course
+16:35	vti	reallY?
+16:35	sri	get_ok(..., {...})
+16:35		i do that all the time for lite_app.t
+
+modes and log levels:
+16:39	sri	the question is should we promote MOJO_MODE or simply add a --loglevel command line switch
+16:39		(for lite)
+16:40		for lite all the mode does is pick a log file with the mode name and the right log level
+16:42		the "app->log->level('error');" trick is also shown in the tutorial
+16:42		to make apps less noisy
+11:07	yko	wow
+11:07		$self->$mode(@_) if $self->can($mode);
+11:07		i haven't seen that
+11:07		so if application can 'development_mode' it will be called at startup?
+11:08		before startup, even
+11:08	sri	just liek the pod says ;p
+11:08	yko	how sweet, thank you
+11:09	sri	it's the big advantage normal mojolicious has over lite regarding modes
+11:10	vti	yko: you didn't know about that? OO
+11:10		http://github.com/vti/mojolici[…]ojoliciousApps.pm
+11:10		here is an example how to use it :)
+
+examples: bootylicious, pastelicious, urlicious, contenticious
+mojowka and mojomber!
+
+
+ajax with mojolicious: http://github.com/yko/mojolicious-example-ajax/commits/master/
+
+fastcgi with sockets:
+15:19	skaurus	trying to start Mojo in fastcgi mode with socket:
+15:19		script/birdy fastcgi --listen file:///tmp/birdy.sock
+15:19		and receiving: Can't accept FastCGI connection: Socket operation on non-socket
+15:20		ls -Fla /tmp/birdy.sock: srwxrwxrwx 1 root root 0 Aug 22 11:07 /tmp/birdy.sock=
+15:20		daemon mode with this socket seems to start
+15:20	sri	the native fastcgi binding doesn't support listening on sockets
+15:21		it requires and external proc manager
+15:21		spawn-fcgi is the most popular i think
+15:22	sri	you can always get a list of all available options for a command with "mojolicious help $command"
+15:23		in the case of fastcgi, there are no options :)
+15:25		or you could use PSGI, there is a cookbook recipe
+15:25		"% plackup ./script/myapp -s FCGI -l /tmp/myapp.sock"
+15:26		from what i heard spawn-fcgi is more fun though
+15:30	sri	the cookbook lists quite a few deployment options, my favorite is the prefork daemon behind a nginx reverse proxy
+
+logs and deployment:
+16:14	dotan	does mojolicious write a log file by default when run as Fastcgi? Does it try to create it under $Findbin::bin/log or similar?
+16:16		OOh! It writes to the Apache log, of course!
+
+remote server address:
+21:16	tab	hi, what is the best way to get the remote ip address of the client using my Mojolicious application?
+21:16		currently I´m using the prefork daemon together with nginx, where $ENV{REMOTE_ADDR} doesn´t work
+21:17	sri	don't use %ENV in mojolicious
+21:18		$self->tx->remote_address;
+21:18	skaurus	proxy_set_header X-Forwarded-for $remote_addr; ?
+21:18	sri	you might have to enable MOJO_REVERSE_PROXY=1
+21:19		depends if nginx is on the same server
+21:20		it of course depends on X-Forwarded-For
+21:22	tab	nginx is on the same server
+21:30		now $self->tx->remote_address returns 127.0.0.1  :-(
+21:30		but MOJO_REVERSE_PROXY is set to 1
+21:35	sri	then X-Forwarded-For is missing
+21:35	tab	now it works
+21:36		i added this x-forwarded in nginx config
+19:57	sri	proxy_set_header Host $http_host;
+19:17	DaTa	marcus: ProxyPreserveHost On
+19:17		for apache :)
+21:03	sri	dumping $self->req->env usually shows whats wrong
+--> see cookbook
+
+rendering data:
+20:46	stephan48	how do i prevent encoding of text via mojo?
+20:46	sri	use data
+20:47		text = perl chars, data = perl bytes
+20:47	stephan48	how to accomplish that?
+20:47	skaurus		render(data => ...)
+
+18:38	crab	can i override the built-in TagHelpers?
+18:40		if i do $app->renderer->add_helper(input => ...), will it do the right thing?
+18:41	sri	it will
+
+using deparse
+perl -MO=Deparse -e 'use constant DEBUG => 0; print "FOO!" if DEBUG; print "BAR!"'
+
+user ids
+21:39	ash_	is there a way to get to the session id with mojo?
+21:39	sri	what session id?
+21:40		by default there is none
+21:41	ash_	hmm, i wonder what the best way of coming up with a guid for each session is... i was just hoping it already did that :P
+21:41	sri	none needed for sessions
+21:42	ash_	yes, well, i have a need for a guid for each session for another piece of software
+21:42	sri	generally sha1(username + time + rand) is quite good
+
+getting current request method
+05:22	polvo	how do i get current request method from a controller?
+05:27	koban	polvo: $self->req->... in your controller
+01:04	sri	*all* information about a request is available
+01:05		with print $self->req you can even let mojolicious rebuild the request
+
+controler and variables:
+22:29	skaurus	and one more question... is there a place where i can populate Controller object with some my variables?
+22:30	sri	use the stash
+22:30	skaurus	i can call some func inside each method and populate $self with anything
+22:30		but maybe some central place?
+22:30		like "before"?
+22:31	sri	well, it's just a perl object
+22:31		you can always overload new
+22:31	skaurus	nice idea, thanks :)
+22:33	tempire	skaurus: You might be wanting a routing bridge.
+22:33	sri	or just app->defaults(...)
+22:34	skaurus	tempire: what is a "routing bridge"?
+22:34	tempire	Mojolicious::Guides::Routing
+22:34	sri	it's all in the guides
+22:34	tempire	under the heading, 'ADVANCED'
+
+--reload blues
+If reloading does not seem to work for your, your source probably has fatal syntax errors. Try perl -c on the files changed.
+
+flash:
+00:20	diegok	if I put $self->flash( xx => 'lalala' ), I'll have flash->{xx} on the next request (after redirect_to) .ep on <% flash->{xx} %> ?
+00:34		I'm always getting flash = {}...
+00:35		but I can see the value on session->{old_flash}{xx}
+00:46	sri	diegok: <%= flash 'xx' %>
+00:47	sri	hash access is set only
+00:48	diegok	so, I can check to have a value with ----> % if ( flash 'xx' ) {
+00:50	diegok	thank you ;)
+00:52	sri	flash is special, because old values come from a different hash
+
+redirects:
+15:54	xantus_	sri: how do you feel about making redirects easier
+15:54		for example: get '/' => '/index.html';
+15:56	sri	that case is reserved for route names
+15:56	xantus_	no biggie, get '/' => sub { shift->redirect_to('/index.html'); }; is not too hard either
+15:56	sri	was about to say it :)
+15:58	xantus_	oh, is there a mech for internal redirect?
+15:58	sri	we don't do internal redirect, bad design
+16:00	xantus_	$c->render_static is what I really needed anyway
+
+nested controllers (or subnamespaces)
+17:23	nuclon	is there a way to have nested controllers, like 'admin', 'admin/users' => App::Admin, App::Admin::Users?
+17:24	sri	admin-users
+17:25		route('/admin/users')->to('admin-users#list') or so
+
+static files and binary files in __DATA__:
+16:42	ash_	can you configure a mojo lite app to server static files?
+16:47	sri	ash_: no need to configure, it automatically serves static files from the public directory
+16:48	ash_	do you have to set it? i keep getting errors (this is a lite app with everything in 1 file currently)
+16:49	sri	you of course need a public directory with static files
+16:50		or do you want to serve static files from the DATA section?
+16:50		thats possible too if they have the right name
+16:51		like @@ static.txt
+16:51	ash_	so, if i had /file.pl then /public/images/logo.gif is that how i need to setup my directories?
+16:51	sri	yes
+16:51	ash_	i have the text based stuff in the DATA section, i just was wondering more for images
+16:51	sri	@@ static2.png (base64)
+16:51		:)
+16:51		we also support inlined base64 files
+16:53	ash_	do you know an easy way to base64 a file?
+16:53	sri	Mojo::ByteStream makes it simple once you have the file in memor16:53		hmm, wonder if we should add a command :)
+16:54		"mojo base64 foo.png" could be useful
+16:55	ash_	"mojo base64 foo.png >> myfile.pl" and get @@ foo.png + base64
+16:55	sri	hmm, openssl does base64 too
+18:06	sri	"openssl base64 -in foo.png"
+
+06:04		could anyone tell me how to render json response for using jsonp (with callback function)?
+06:05		i.e. request from JQuery will be smth like: http://url/?foo=bar&callback=test
+06:06		It must be in response body: test({"key":"val"})
+06:10	sri	$self->render(data => $json, format => 'json');
+06:11		or actually format => 'js' i guess
+06:11		we don't have a special helper for jsonp
+06:11		you just use Mojo::JSON to encode your structure and add a wrapper yourself
+06:13		my $json = $self->render(json => {key => 'val'}, partial => 1); $self->render(data => "test($json)", format => 'js');
+06:13		something like that
+
+controller namespace:
+03:22	Kulag	Is it possible to get Mojolicious to detect my controllers if they're under AppName::Controller:: instead of AppName::?
+03:24	crab	$r->namespace('AppName::Controller');
+03:30	crab	read Guides/Routing.pod
+
+always decode data from DBI:
+16:42	sri	ah, seems to be DBD specific
+16:42		my $dbh = DBI->connect($dsn, "root", "", { mysql_enable_utf8 => 1 });
+16:43		pg_enable_utf8 for postgres
+
+timed events:
+03:37	sri	with the daemon it's possible Mojo::IOLoop->singleton->timer(...)
+
+cache helper:
+the cache helper runs the code once, caches its result as a string in the compiled template, and just uses the string. Then the life time of the cache is the lifetime of the server - one request for CGI, but much much longer for Daemon-Prefork (ie Hypnotoad), FastCGI and Pluckup/ModPerl? And the cost in the CGI case is negligible.
+
+extends and layouts:
+08:11	koban	sri: can i  'extends' template that uses 'layout'?
+08:12	sri    		one of the two
+08:13		they are exclusive i think
+08:13	koban	so or layout or extends?
+
+routes from plugins:
+10:06	maettu	what I don't understand about the plugin system is how I can write a plugin that acts like a route.
+10:07		everything I find are events that happen before or after a dispatch
+10:11	sri	maettu: your plugins register normal routes
+10:11		maettu: there's an example in the guides
+10:12		the register method of your plugin gets the $app instance
+10:12		so you get $app->routes
+10:12		you can do *everything* startup can
+
+error page from a plugin and from a renderer:
+just use die()
+09:28	zakame 	sri: thanks :) so as for my renderer trying to handle bad input, what should I do?
+09:46	sri	zakame: depends what you want to do, generally $c->render_exception(...) might be a good idea
+
+17:06	nuclon	does Mojo::Message::Request have an method for getting user ip address?
+17:08	sri 	nuclon: $self->tx->remote_address or so
+
+13:30	sri	get '/happy' => '*';
+13:30		(will render the template happy.html.ep)
+13:32		or just get '/happy' => sub { shift->render('happy') };
+
+minimalistic path rewrite in a plugin:
+app->plugins->add_hook(before_dispatch => sub {
+    my ($self, $c) = @_;
+    return unless my $rm = $c->param('rm');
+    $c->req->url->path($rm);
+});
+
+full page caching:
+18:17	sri	not sure i actually want full page caching inside mojolicious
+18:18		setting the appropriate headers and letting an nginx take care of caching is generally way better
+18:18		(for full page)
+
+params and stash:
+20:01	esskar_	agreed
+
+20:03		$c->param does not read anything from stash, does it?
+20:03		oh, it does
+20:03		thats evil
+20:04	marcus	$c?
+20:04	esskar_	$c as in $self
+20:04		as in controller
+20:05	marcus	$celf
+20:05	esskar_	i thought it's just s shortcut to $self->req->param
+20:48	xantus[]	wait, $c->param reads from the stash?
+21:00	marcus	my $params = $self->stash->{'mojo.params'} || $self->req->params;
+21:01		so that routes can add to them, apparently
+21:07	esskar_	whats {'mojo.params'}?
+21:08	marcus	it's a clone of the params
+21:08		my $p = $c->stash->{'mojo.params'} ||= $c->tx->req->params->clone;
+21:53	sri	esskar: not the whole stash
+21:53		$self->param is $self->req->param + route captures
+21:53		only captured values, not the whole stash
+
+uploading files:
+(06:50:03 PM) und3f: sri, btw, does $client->post( $url, file => {content => $content } ) uploads a file?
+(06:50:34 PM) sri: that request looks wrong
+(06:51:39 PM) sri: there is no way that produces a sensible request
+(06:51:46 PM) und3f:            my $tx= $client->post_form(
+(06:51:46 PM) und3f:                'http://kraih.com/foo',
+(06:51:46 PM) und3f:                {file => {content => 'lalala'}}
+(06:51:46 PM) und3f:            );
+(06:51:56 PM) sri: ...
+(06:52:04 PM) und3f: oh right
+(06:52:11 PM) und3f: i missed just 2 brackets 
+(06:52:18 PM) sri: and the method
+(06:52:56 PM) und3f: sri, let me rephrase question
+(06:53:20 PM) sri: if you want to know what i actually produces try print $client->build_form_tx(...)->req;
+(06:53:39 PM) sri: takes the same arguments
+(06:53:40 PM) und3f: thanks
+(09:44:40 PM) und3f: sri, how to check that upload limit were exceeded?
+(09:45:25 PM) sri: req->error
+
+23:20	esskar_	is there a property to the template path somehwere?
+23:30	sri    	$app->renderer->root?
+
+on partial rendering:
+15:30	esskar_	sri, if i have file to a template, how can i render it to a string with all the stuff from the stash accessible from the template?
+15:31	und3f	esskar, $self->render_partial
+15:38	esskar_	und3f: even if i only have the filename? or what do i put as the first parameter?
+15:39	und3f	esskar_, rednder_partial uses same arguments as render
+15:40		esskar_,  you can do $self->render_partial(template => 'test');
+
+(12:54:13 AM) stereonaut: Hello folks. What should I be using to serve static files through actions on controllers? Upon request, I need to run some logic to serve an specific static file.
+(12:56:37 AM) DaTa: stereonaut: $c->render_static('images/logo.png');
+(01:07:49 AM) stereonaut: DaTa: thanks.
+
+05:37:17 AM) polvo: heh. the manual says 'just make sure not to use ^, $ and ()' for placeholder checks. then how do i workaround qr/(white|black)/ ?
+(06:05:31 AM) sri: polvo: qr/white|black/ should just work
+(06:05:55 AM) sri: you can always look at the compiled regex via "myapp.pl routes"
+
+(09:16:18 AM) yakudzo: can anyone tell how to add Mojo::Log to helper to use it like $self->log->info('some thing')
+(09:26:55 AM) koban: yakudzo: $self->app->add_helper(log => sub { shift->app->log->debug( @_ ) });
+(09:27:33 AM) yakudzo: koban, in sub statup ?
+(09:35:20 AM) yakudzo: koban, in sub startup it is $self->addhe_lper. 
+
+cookies in requests:
+09:08	zamolxes	hey. i'm trying to make a http request with a cookie, not quite sure how to do that, i got the cookie jar, what do I pass to ->add ?a  Mojo::Cookie?
+09:17		worked
+09:18	Rhaen	:) what worked?
+09:18	zamolxes	$client->cookie_jar->add(Mojo::Cooki​e::Response->new(domain=>'foo.com', name=>'wutwut', value=>'but')); $client->get('foo.com/wutwut'); #works
 
 =cut
 1
