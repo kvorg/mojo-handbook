@@ -1,15 +1,24 @@
 The purpose of this project is to compile a corpus of documentation
-for Mojo/Mojolicious.
+for Mojo/Mojolicious, oriented towards a beginner user in the world
+of modern Model/View/Controller web frameworks.
 
-As much as possible this is to be reused for Mojolicious
-distribution. As that happens, the copyright should be reassigned to
-Mojolicious distribution author and it should be issued under the same
-conditions as the rest of the package, under its release managers decisions.
+We hope to explain the concepts and the architecture and make it clear
+how to use the different components of Mojolicious to different ends
+and in different contexts.
+
+This is hoped to be as much as a complement to the existing
+Mojolicious documentation, reused and integrated with the
+Mojolicious::Guides and the Mojolicious Wiki
+L<http://github.com/kraih/mojo/wiki> as much as possible.
+
+As that happens, the copyright should be reassigned to Mojolicious
+distribution author and it should be issued under the same conditions
+as the rest of the package, under its release managers decisions.
 
 The authors of the original material retain the rights to republish
 this in different context, so any contributors should probably
 contribute to the version or subsection accepted in the Mojolicious
 contribution - this is just a scratch pad, YMMV. You have been warned.
 
-All the mistakes are ours, what is true can be only found in the code
-(and perhaps reference docs).
+All the mistakes are ours, the truth can be only found in the code,
+pointed to by the guides and the reference docs.
