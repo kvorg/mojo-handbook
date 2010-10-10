@@ -141,7 +141,10 @@ the following facts:
 Most of the manual pages in the distribution are reference-only: they
 do not describe the framework and how to use it, but the interfaces
 (APIs) and implementation details for developers. They are for people
-who can follow the code.
+who can follow the code. Notable exceptions are L<Mojolicious::Lite>,
+which includes a tutorial, and L<Mojolicious:Guides>, the end-user
+documentation, which is quite usable at this time (2010), but still
+being written.
 
 =item *
 
@@ -184,21 +187,31 @@ in C<Mojolicious> distribution:
 
 Introduction to the simplified application interfaces with full examples.
 
+=item L<Mojolicious::Guides>
+
+The end-user documentation. See L<Mojolicious::Guides::Routing> for
+documentation and examples for the use of L<Mojolicious> and
+L<L<Mojolicious::Lite> routing, see L<Mojolicious::Guides::Rendering>
+for rendering and templating documentation and
+examples. L<Mojolicious::Guides::Cookbook> contains many recipies,
+manly for deplayment in different environments, and is a must if you
+want to be ready to deploy your application. See
+L<Mojolicious::Guides::Cheatsheet> for a concise reference on reserved
+stash values and environement variables used by the framework.
+
 =item L<Mojolicious::Commands>
 
-Command-line interface
+Command-line interface, but command-line commands also give help by
+appending a 'help' to the commandline.
 
 =item L<Mojo::Template>, L<Mojolicious::Plugin::EpRenderer>
 
-Templating subsystem
+Templating subsystem, see L<Mojolicious::Guides::Rendering> first.
 
 =item L<MojoX::Routes>
 
-See SYNOPSIS for examples and syntax.
-
-=item L<Mojolicious::Guides>
-
-=item L<Mojolicious::Guides::Cheatsheet>
+See SYNOPSIS for examples and syntax after reading
+L<Mojolicious::Guides::Routing>.
 
 =back
 
@@ -214,7 +227,9 @@ and bytestream manipulation functions and the simplified C<b()> syntax.
 
 Full examples, blogs and other resources:
 
+=for comment
 XXX needs non-vti examples ;-)
+
 
 =over 8
 
@@ -237,6 +252,9 @@ A IPv6 stack testing application with a NoSQL back-end (quite
 heavy-weight, using KiokuDB, an object-graph store engine built on
 Moose, to access mongoDB): L<http://www.v6test.develooper.com/couch>
 
+=for comment
+add luzy, ssh, irc
+
 =back
 
 =back
@@ -251,7 +269,8 @@ itself with its default and "lite" bindings in C<Mojolicious> namespace.
 
 The presentation here is very simplified and presented from the point
 of view of the application programmer, with as little detail on the
-server/implementation side as possible. See L<COMPONENTS OF MOJOLICIOUS> for a more detailed description.
+server/implementation side as possible. See L<COMPONENTS OF
+MOJOLICIOUS> for a more detailed description.
 
 The HTTP Server is the starting point of the application. For each
 HTTP request, it creates a L<Mojo::Transaction> object, usually
@@ -332,7 +351,7 @@ In the case of example application as produced by C<generate app>
 
 calls
 
- app_name>::Example->welcome()
+ <app_name>::Example->welcome()
 
 The path data and additional context are all stored in C<$stash>, a
 hash used for transaction-specific non persistent data storage and
@@ -375,7 +394,8 @@ and write your controllers/actions, models and views (templates).
 
 =head1 MOJOLICIOUS AND MOJOLICIOUS LITE
 
-XXX perhaps a short anatomy of the files here
+=for comment
+XXX perhaps a short anatomy of the file structure here
 
 =head1 DISPATCHING
 
@@ -394,6 +414,7 @@ satisfy the reqeuest simply with a file.
 
 C<MojoX::Dispatcher::Static>
 
+=for comment
 XXXX mostly not done from here on, but there are some fuller sections
 to be found.
 
@@ -474,7 +495,7 @@ When using redirect_to with named routes... is there a way to set values for the
 
 =head2 Bridges
 
-=head2 Routes and ladders in L<Mojolicious::Lite>
+=head2 Routes and under in L<Mojolicious::Lite>
 
 Automation, controller/methods
 
@@ -642,12 +663,12 @@ accident-prone application. The stash is your friend, use the stash!
 =head2 Models and files
 
 
-=head1 DEBUGGING MOJOLICIOUS APPLICATIONS
+=head1 TESTING AND DEBUGGING MOJOLICIOUS APPLICATIONS
+
+writing tests
 
 basics: warnings, strict, perltidy, note on L<Mojolicious::Lite>
 defaults
-
-writing tests
 
 controlling verbosity
 
@@ -671,6 +692,12 @@ writing a plugin and loading it in your application. See L</Extending
 Mojolicious with Plugins> for more information.
 
 =head1 USING MOJO HTTP CLIENT
+
+in an application
+
+with -Mojo
+
+using Mojo::DOM
 
 =head1 MOJOLICIOUS IN PRODUCTION
 
@@ -714,9 +741,9 @@ prefork
 
 =head2 Running with C<FastCGI>
 
-=head2 Running under C<mod_perl>
-
 =head2 Running with C<PSGI>
+
+=head2 Running under C<mod_perl> with C<PSGI> 
 
 =begin comments
 
